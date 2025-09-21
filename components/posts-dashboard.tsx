@@ -70,9 +70,9 @@ const posts = [
 
 export function PostsDashboard() {
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-6 py-4">
+      <div className="border-b border-gray-200 bg-white px-6 py-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Posts</h1>
@@ -90,9 +90,9 @@ export function PostsDashboard() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
-        <Tabs defaultValue="all" className="h-full flex flex-col">
-          <div className="border-b border-gray-200 px-6 py-2 flex-shrink-0">
+      <div className="flex-1">
+        <Tabs defaultValue="all" className="flex flex-col">
+          <div className="border-b border-gray-200 px-6 py-2 bg-white sticky top-[88px] z-10">
             <TabsList className="grid w-full max-w-md grid-cols-4">
               <TabsTrigger value="all">All Posts</TabsTrigger>
               <TabsTrigger value="published">Published</TabsTrigger>
@@ -101,10 +101,9 @@ export function PostsDashboard() {
             </TabsList>
           </div>
 
-          <TabsContent value="all" className="flex-1 m-0 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="p-6 space-y-4 pb-8">
-                {posts.map((post) => (
+          <TabsContent value="all" className="flex-1 m-0">
+            <div className="p-6 space-y-4 pb-8">
+              {posts.map((post) => (
                   <Card
                     key={post.id}
                     className="hover:shadow-md transition-shadow"
@@ -184,36 +183,29 @@ export function PostsDashboard() {
                     </CardContent>
                   </Card>
                 ))}
-              </div>
-            </ScrollArea>
+            </div>
           </TabsContent>
 
-          <TabsContent value="published" className="flex-1 m-0 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="p-6">
-                <p className="text-gray-600">
-                  Published posts will appear here
-                </p>
-              </div>
-            </ScrollArea>
+          <TabsContent value="published" className="flex-1 m-0">
+            <div className="p-6">
+              <p className="text-gray-600">
+                Published posts will appear here
+              </p>
+            </div>
           </TabsContent>
 
-          <TabsContent value="drafts" className="flex-1 m-0 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="p-6">
-                <p className="text-gray-600">Draft posts will appear here</p>
-              </div>
-            </ScrollArea>
+          <TabsContent value="drafts" className="flex-1 m-0">
+            <div className="p-6">
+              <p className="text-gray-600">Draft posts will appear here</p>
+            </div>
           </TabsContent>
 
-          <TabsContent value="scheduled" className="flex-1 m-0 overflow-hidden">
-            <ScrollArea className="h-full">
-              <div className="p-6">
-                <p className="text-gray-600">
-                  Scheduled posts will appear here
-                </p>
-              </div>
-            </ScrollArea>
+          <TabsContent value="scheduled" className="flex-1 m-0">
+            <div className="p-6">
+              <p className="text-gray-600">
+                Scheduled posts will appear here
+              </p>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

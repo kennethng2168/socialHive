@@ -158,7 +158,7 @@ function createCopywritingPrompt(
     instagram: 'Instagram post with engaging visuals focus, use emojis strategically',
     twitter: 'Twitter/X post, be concise and punchy, use relevant hashtags',
     facebook: 'Facebook post, can be longer and more conversational',
-    linkedin: 'LinkedIn post, professional tone with industry insights',
+    tiktok: 'TikTok video caption, trendy and engaging, use viral language and hashtags',
     youtube: 'YouTube description/comment, engaging and searchable',
     general: 'General social media post, adaptable format'
   };
@@ -257,8 +257,8 @@ function generateFallbackCopy(
   // Add platform-specific elements
   if (platform === 'instagram') {
     copy += ' ✨ Join thousands who\'ve already made the switch! 🚀';
-  } else if (platform === 'linkedin') {
-    copy += ' What are your thoughts on this industry development?';
+  } else if (platform === 'tiktok') {
+    copy += ' 🔥 This is about to blow up! Comment "YES" if you agree 👇';
   } else if (platform === 'twitter') {
     copy += ' 🧵 Thread below ⬇️';
   } else if (platform === 'facebook') {
@@ -317,6 +317,6 @@ export async function GET(request: NextRequest) {
       'Character limit enforcement'
     ],
     geminiConnected: !!process.env.GEMINI_API_KEY,
-    supportedPlatforms: ['Instagram', 'Twitter/X', 'Facebook', 'LinkedIn', 'YouTube', 'General']
+    supportedPlatforms: ['Instagram', 'Twitter/X', 'Facebook', 'TikTok', 'YouTube', 'General']
   });
 }

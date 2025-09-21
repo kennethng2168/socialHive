@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
 import { 
   PenTool, 
   Copy, 
@@ -28,7 +29,7 @@ import {
   Twitter,
   Youtube,
   Facebook,
-  Linkedin
+  Camera
 } from "lucide-react";
 
 interface CopyResult {
@@ -46,7 +47,7 @@ const PLATFORMS = [
   { id: 'instagram', name: 'Instagram', icon: Instagram, maxLength: 2200, color: 'bg-gradient-to-r from-purple-500 to-pink-500' },
   { id: 'twitter', name: 'Twitter/X', icon: Twitter, maxLength: 280, color: 'bg-black' },
   { id: 'facebook', name: 'Facebook', icon: Facebook, maxLength: 500, color: 'bg-blue-600' },
-  { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, maxLength: 700, color: 'bg-blue-700' },
+  { id: 'tiktok', name: 'TikTok', icon: Camera, maxLength: 2200, color: 'bg-black' },
   { id: 'youtube', name: 'YouTube', icon: Youtube, maxLength: 1000, color: 'bg-red-600' },
   { id: 'general', name: 'General', icon: MessageCircle, maxLength: 1000, color: 'bg-gray-600' }
 ];
@@ -59,6 +60,15 @@ const TONES = [
 const CONTENT_TYPES = [
   'Product Launch', 'Behind the Scenes', 'Tutorial/How-to', 'User Generated Content',
   'Question/Poll', 'Quote/Inspiration', 'News/Update', 'Promotional', 'Educational', 'Entertainment'
+];
+
+const SAMPLE_PROMPTS = [
+  "Launch a new productivity app for remote workers",
+  "Promote a sustainable fashion brand",
+  "Announce a special discount on online courses",
+  "Share a behind-the-scenes look at your startup",
+  "Introduce a new AI-powered feature",
+  "Celebrate reaching 10k followers milestone"
 ];
 
 const SAMPLE_COPIES = [
@@ -74,17 +84,18 @@ const SAMPLE_COPIES = [
   },
   {
     id: '2', 
-    content: "Quick tip: The best time to post on social media isn't when YOU'RE online—it's when YOUR AUDIENCE is online. 📊 Use analytics to find your golden hours! 🕐 What's your peak engagement time?",
-    platform: 'linkedin',
-    tone: 'Educational',
-    style: 'Tutorial/How-to',
+    content: "POV: You discover the secret to viral content 🤯✨ It's not about following trends—it's about creating your own! Drop your most creative video idea below 👇 #ContentCreator #ViralTips #TikTokTips",
+    platform: 'tiktok',
+    tone: 'Casual',
+    style: 'Entertainment',
     timestamp: new Date(),
-    hashtags: ['#SocialMediaTips', '#ContentStrategy'],
+    hashtags: ['#ContentCreator', '#ViralTips', '#TikTokTips'],
     engagement_score: 9.2
   }
 ];
 
 export function CopywritingStudio() {
+  const { toast } = useToast();
   const [selectedPlatform, setSelectedPlatform] = useState('instagram');
   const [selectedTone, setSelectedTone] = useState('Professional');
   const [selectedType, setSelectedType] = useState('Product Launch');
@@ -94,11 +105,36 @@ export function CopywritingStudio() {
   const [generatedCopies, setGeneratedCopies] = useState<CopyResult[]>(SAMPLE_COPIES);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<'generate' | 'history'>('generate');
+  const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
 
   const currentPlatform = PLATFORMS.find(p => p.id === selectedPlatform) || PLATFORMS[0];
 
+  // Check API status on component mount
+  useEffect(() => {
+    const checkApiStatus = async () => {
+      try {
+        const response = await fetch('/api/copywriting-ai', {
+          method: 'GET',
+        });
+        const data = await response.json();
+        setApiStatus(data.geminiConnected ? 'connected' : 'disconnected');
+      } catch (error) {
+        setApiStatus('disconnected');
+      }
+    };
+
+    checkApiStatus();
+  }, []);
+
   const handleGenerate = async () => {
-    if (!prompt.trim()) return;
+    if (!prompt.trim()) {
+      toast({
+        title: "Prompt required",
+        description: "Please enter what you want to promote or create content about.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsGenerating(true);
 
@@ -121,7 +157,7 @@ export function CopywritingStudio() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate copy');
+        throw new Error(`Failed to generate copy: ${response.status}`);
       }
 
       const data = await response.json();
@@ -139,8 +175,24 @@ export function CopywritingStudio() {
 
       setGeneratedCopies(prev => [newCopy, ...prev]);
       setActiveTab('history');
+
+      // Success notification
+      toast({
+        title: "Copy generated successfully!",
+        description: `Created ${selectedTone.toLowerCase()} ${selectedType.toLowerCase()} content for ${currentPlatform.name}.`,
+      });
+
+      // Clear the prompt for next generation
+      setPrompt('');
+
     } catch (error) {
       console.error('Copywriting generation error:', error);
+      
+      toast({
+        title: "Generation failed",
+        description: "Using fallback copy generator. Check your API key configuration.",
+        variant: "destructive",
+      });
       
       // Fallback demo copy
       const fallbackCopy: CopyResult = {
@@ -200,9 +252,20 @@ export function CopywritingStudio() {
     return [...keywordTags, ...baseHashtags].slice(0, 5);
   };
 
-  const copyToClipboard = (content: string) => {
-    navigator.clipboard.writeText(content);
-    // Could add toast notification here
+  const copyToClipboard = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast({
+        title: "Copied to clipboard!",
+        description: "The content has been copied and is ready to paste.",
+      });
+    } catch (error) {
+      toast({
+        title: "Copy failed",
+        description: "Unable to copy to clipboard. Please select and copy manually.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getEngagementColor = (score: number) => {
@@ -212,9 +275,9 @@ export function CopywritingStudio() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col min-h-screen">
       {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-6 py-4 flex-shrink-0">
+      <div className="border-b border-gray-200 bg-white px-6 py-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -230,17 +293,34 @@ export function CopywritingStudio() {
               <Zap className="h-3 w-3 mr-1" />
               AI Powered
             </Badge>
+            {apiStatus === 'checking' && (
+              <Badge variant="outline" className="bg-gray-50">
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                Checking API...
+              </Badge>
+            )}
+            {apiStatus === 'connected' && (
+              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Gemini Connected
+              </Badge>
+            )}
+            {apiStatus === 'disconnected' && (
+              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                <Clock className="h-3 w-3 mr-1" />
+                Using Fallback
+              </Badge>
+            )}
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-2 h-full">
+      <div className="flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 min-h-0">
           {/* Left Panel - Generator */}
           <div className="border-r border-gray-200 bg-white">
-            <ScrollArea className="h-full">
-              <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -328,6 +408,18 @@ export function CopywritingStudio() {
                         placeholder="Describe your product, service, or message..."
                         className="min-h-[100px]"
                       />
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        <p className="text-xs text-gray-500 w-full">Quick start ideas:</p>
+                        {SAMPLE_PROMPTS.slice(0, 3).map((samplePrompt, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setPrompt(samplePrompt)}
+                            className="text-xs px-2 py-1 bg-purple-50 hover:bg-purple-100 rounded-full text-purple-700 border border-purple-200"
+                          >
+                            {samplePrompt}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Target Audience */}
@@ -350,6 +442,14 @@ export function CopywritingStudio() {
                       />
                     </div>
 
+                    {apiStatus === 'disconnected' && (
+                      <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg mb-4">
+                        <p className="text-sm text-orange-800">
+                          <strong>API Not Configured:</strong> Add your GEMINI_API_KEY to .env.local file to unlock full AI capabilities. Currently using fallback generator.
+                        </p>
+                      </div>
+                    )}
+
                     <Button
                       onClick={handleGenerate}
                       disabled={!prompt.trim() || isGenerating}
@@ -370,8 +470,7 @@ export function CopywritingStudio() {
                     </Button>
                   </CardContent>
                 </Card>
-              </div>
-            </ScrollArea>
+            </div>
           </div>
 
           {/* Right Panel - Results */}
@@ -391,8 +490,7 @@ export function CopywritingStudio() {
                 </div>
               </div>
 
-              <ScrollArea className="h-[calc(100vh-200px)]">
-                <div className="space-y-4">
+              <div className="space-y-4 pb-8">
                   {generatedCopies.map((copy) => {
                     const platform = PLATFORMS.find(p => p.id === copy.platform);
                     return (
@@ -448,15 +546,14 @@ export function CopywritingStudio() {
                     );
                   })}
                   
-                  {generatedCopies.length === 0 && (
-                    <div className="text-center py-12">
-                      <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No content generated yet</h3>
-                      <p className="text-gray-600 mb-4">Create your first AI-powered copy using the form on the left</p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
+                {generatedCopies.length === 0 && (
+                  <div className="text-center py-12">
+                    <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No content generated yet</h3>
+                    <p className="text-gray-600 mb-4">Create your first AI-powered copy using the form on the left</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

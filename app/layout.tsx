@@ -6,7 +6,6 @@ import { Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { FloatingAIAssistant } from "@/components/floating-ai-assistant";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -33,7 +32,6 @@ export default function RootLayout({
         className={`font-sans ${GeistSans.variable} ${GeistMono.variable} ${playfair.variable}`}
       >
         <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-        <FloatingAIAssistant />
         <Toaster />
         <Analytics />
       </body>
