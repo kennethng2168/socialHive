@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Link from "next/link";
 import {
   Video,
   Eye,
@@ -79,10 +80,12 @@ export function PostsDashboard() {
               Manage your published and draft content
             </p>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 text-white">
-            <Video className="h-4 w-4 mr-2" />
-            Create Post
-          </Button>
+          <Link href="/posts/create">
+            <Button className="bg-primary hover:bg-primary/90 text-white">
+              <Video className="h-4 w-4 mr-2" />
+              Create Post
+            </Button>
+          </Link>
         </div>
       </div>
 
