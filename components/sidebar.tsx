@@ -18,12 +18,12 @@ import {
   MessageSquare,
   Plus,
   Bot,
-  Workflow,
   ImageIcon,
   Shirt,
   Camera,
   Film,
   Zap,
+  PenTool,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,9 +37,21 @@ const navigation = [
 
 const aiTools = [
   {
+    name: "Content Workflow Studio",
+    icon: Zap,
+    href: "/content-workflow",
+    current: false,
+  },
+  {
     name: "AI Content Assistant",
     icon: Bot,
     href: "/ai-assistant",
+    current: false,
+  },
+  {
+    name: "AI Copywriting Studio",
+    icon: PenTool,
+    href: "/copywriting",
     current: false,
   },
   {
@@ -60,19 +72,13 @@ const aiTools = [
     href: "/virtual-try-on",
     current: false,
   },
-  {
-    name: "AI Inspiration",
-    icon: Sparkles,
-    href: "/ai-inspiration",
-    current: false,
-  },
-  {
-    name: "Workflow Editor",
-    icon: Workflow,
-    href: "/workflow",
-    current: false,
-  },
-  { name: "Unlimited Sounds", icon: Music, href: "/sounds", current: false },
+  // {
+  //   name: "AI Inspiration",
+  //   icon: Sparkles,
+  //   href: "/ai-inspiration",
+  //   current: false,
+  // },
+  // { name: "Unlimited Sounds", icon: Music, href: "/sounds", current: false },
 ];
 
 const others = [
@@ -154,7 +160,7 @@ export function Sidebar() {
                 <item.icon className="h-5 w-5" />
                 {item.name}
                 {(item.name.includes("AI") ||
-                  item.name === "Workflow Editor") && (
+                  item.name === "Content Workflow Studio") && (
                   <Wand2 className="h-3 w-3 text-accent ml-auto" />
                 )}
               </Link>

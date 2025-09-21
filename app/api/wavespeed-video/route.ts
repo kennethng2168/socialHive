@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { uploadVideoToS3, downloadFileFromUrl, generateFileName, isS3Configured } from '@/lib/s3-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -213,16 +214,56 @@ export async function POST(request: NextRequest) {
       
       // If the task is completed immediately (sync mode or fast processing)
       if (status === 'completed' && outputs.length > 0) {
+        const originalVideoUrl = outputs[0];
+        let s3Url = null;
+        let s3UploadError = null;
+
+        // Try to upload to S3 if configured
+        if (isS3Configured() && originalVideoUrl) {
+          try {
+            console.log('Uploading generated video to S3...');
+            const videoBuffer = await downloadFileFromUrl(originalVideoUrl);
+            const fileName = generateFileName('video', model);
+            
+            const uploadResult = await uploadVideoToS3(videoBuffer, fileName, {
+              model,
+              prompt: prompt.substring(0, 100), // Truncate for metadata
+              resolution,
+              duration,
+              seed: seed || undefined,
+              taskId,
+              originalUrl: originalVideoUrl
+            });
+
+            if (uploadResult.success) {
+              s3Url = uploadResult.url;
+              console.log('Successfully uploaded video to S3:', s3Url);
+            } else {
+              s3UploadError = uploadResult.error;
+              console.error('Failed to upload video to S3:', uploadResult.error);
+            }
+          } catch (error) {
+            s3UploadError = error instanceof Error ? error.message : 'S3 upload failed';
+            console.error('S3 upload error:', error);
+          }
+        }
+
         return NextResponse.json({
           success: true,
-          videoUrl: outputs[0],
+          videoUrl: originalVideoUrl,
+          s3Url: s3Url,
           taskId: taskId,
           metadata: {
             model,
             prompt,
             resolution,
             duration,
-            seed: seed ? parseInt(seed) : undefined
+            seed: seed ? parseInt(seed) : undefined,
+            s3Upload: {
+              enabled: isS3Configured(),
+              success: !!s3Url,
+              error: s3UploadError
+            }
           }
         });
       } 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { uploadImageToS3, downloadFileFromUrl, generateFileName, isS3Configured } from '@/lib/s3-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -268,15 +269,54 @@ export async function POST(request: NextRequest) {
       
       // If the task is completed immediately (sync mode or fast processing)
       if (status === 'completed' && outputs.length > 0) {
+        const originalImageUrl = outputs[0];
+        let s3Url = null;
+        let s3UploadError = null;
+
+        // Try to upload to S3 if configured
+        if (isS3Configured() && originalImageUrl) {
+          try {
+            console.log('Uploading generated image to S3...');
+            const imageBuffer = await downloadFileFromUrl(originalImageUrl);
+            const fileName = generateFileName('image', model);
+            
+            const uploadResult = await uploadImageToS3(imageBuffer, fileName, {
+              model,
+              prompt: prompt.substring(0, 100), // Truncate for metadata
+              resolution,
+              seed: seed?.toString(),
+              taskId,
+              originalUrl: originalImageUrl
+            });
+
+            if (uploadResult.success) {
+              s3Url = uploadResult.url;
+              console.log('Successfully uploaded image to S3:', s3Url);
+            } else {
+              s3UploadError = uploadResult.error;
+              console.error('Failed to upload image to S3:', uploadResult.error);
+            }
+          } catch (error) {
+            s3UploadError = error instanceof Error ? error.message : 'S3 upload failed';
+            console.error('S3 upload error:', error);
+          }
+        }
+
         return NextResponse.json({
           success: true,
-          imageUrl: outputs[0],
+          imageUrl: originalImageUrl,
+          s3Url: s3Url,
           taskId: taskId,
           metadata: {
             model,
             prompt,
             resolution,
-            seed
+            seed,
+            s3Upload: {
+              enabled: isS3Configured(),
+              success: !!s3Url,
+              error: s3UploadError
+            }
           }
         });
       } 

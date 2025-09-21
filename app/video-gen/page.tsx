@@ -28,6 +28,8 @@ import {
   CheckCircle,
   AlertCircle,
   RefreshCw,
+  Cloud,
+  ExternalLink,
   Camera,
   Image as ImageIcon
 } from "lucide-react";
@@ -282,7 +284,7 @@ export default function VideoGenerationPage() {
       
       if (data.success && data.videoUrl) {
         // Video is ready immediately
-        setResult(data);
+      setResult(data);
         setIsGenerating(false);
       } else if (data.success && data.taskId) {
         // Start polling for results
@@ -597,22 +599,22 @@ export default function VideoGenerationPage() {
                   </CardHeader>
                   <CardContent className="flex-1 flex flex-col justify-center items-center p-6">
                     {isGenerating && (
-                      <div className="text-center space-y-4">
-                        <div className="relative">
-                          <Loader2 className="h-16 w-16 animate-spin text-purple-600 mx-auto" />
-                          <div className="absolute inset-0 rounded-full border-4 border-purple-200 animate-pulse"></div>
-                        </div>
-                        <div className="space-y-2">
-                          <h3 className="text-lg font-semibold">Generating with {selectedModel.name}</h3>
-                          <p className="text-purple-600 font-medium">
-                            {selectedModel.speed === "Ultra Fast" ? "⚡ Ultra Fast - Under 30 seconds" :
-                             selectedModel.speed === "Fast" ? "🚀 Fast - Under 1 minute" :
-                             selectedModel.speed === "Standard" ? "⏱️ Standard - Under 2 minutes" :
-                             "🎯 Pro - High Quality Processing"}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Video generation typically takes longer than images. Please wait...
-                          </p>
+                        <div className="text-center space-y-4">
+                          <div className="relative">
+                            <Loader2 className="h-16 w-16 animate-spin text-purple-600 mx-auto" />
+                            <div className="absolute inset-0 rounded-full border-4 border-purple-200 animate-pulse"></div>
+                          </div>
+                          <div className="space-y-2">
+                            <h3 className="text-lg font-semibold">Generating with {selectedModel.name}</h3>
+                            <p className="text-purple-600 font-medium">
+                              {selectedModel.speed === "Ultra Fast" ? "⚡ Ultra Fast - Under 30 seconds" :
+                               selectedModel.speed === "Fast" ? "🚀 Fast - Under 1 minute" :
+                               selectedModel.speed === "Standard" ? "⏱️ Standard - Under 2 minutes" :
+                               "🎯 Pro - High Quality Processing"}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Video generation typically takes longer than images. Please wait...
+                            </p>
                         </div>
                       </div>
                     )}
@@ -621,7 +623,7 @@ export default function VideoGenerationPage() {
                       <div className="w-full space-y-4">
                         <div className="relative">
                           <video
-                            src={result.videoUrl}
+                            src={result.s3Url || result.videoUrl}
                             controls
                             className="max-w-full max-h-[60vh] w-auto h-auto rounded-lg shadow-lg mx-auto"
                             poster="/placeholder.jpg"
@@ -632,6 +634,12 @@ export default function VideoGenerationPage() {
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Success
                           </Badge>
+                          {result.s3Url && (
+                            <Badge className="absolute top-2 left-2 bg-blue-500">
+                              <Cloud className="h-3 w-3 mr-1" />
+                              S3 Stored
+                            </Badge>
+                          )}
                         </div>
                         
                         {result.metadata && (
@@ -643,10 +651,26 @@ export default function VideoGenerationPage() {
                               <div>Duration: {result.metadata.duration}</div>
                               {result.metadata.seed && <div>Seed: {result.metadata.seed}</div>}
                               <div className="col-span-2">Prompt: {result.metadata.prompt}</div>
+                              {result.metadata.s3Upload && (
+                                <div className="col-span-2">
+                                  <div className={`text-xs p-2 rounded ${
+                                    result.metadata.s3Upload.success 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : 'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    <strong>S3 Storage:</strong> {
+                                      result.metadata.s3Upload.success 
+                                        ? '✅ Uploaded to AWS S3' 
+                                        : result.metadata.s3Upload.error || '⏳ Upload in progress'
+                                    }
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
 
+                        <div className="space-y-2">
                         <Button
                           onClick={downloadVideo}
                           className="w-full"
@@ -655,6 +679,18 @@ export default function VideoGenerationPage() {
                           <Download className="h-4 w-4 mr-2" />
                           Download Video
                         </Button>
+                          
+                          {result.s3Url && (
+                            <Button
+                              onClick={() => window.open(result.s3Url, '_blank')}
+                              className="w-full"
+                              variant="outline"
+                            >
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Open S3 URL
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     )}
 
@@ -672,11 +708,11 @@ export default function VideoGenerationPage() {
                         <Film className="h-20 w-20 text-gray-300 mx-auto mb-4" />
                         <h3 className="text-lg font-semibold text-gray-600 mb-2">Ready to Create</h3>
                         <p className="text-gray-500 max-w-md mx-auto">
-                          {selectedModel.category === "image-to-video" 
+                            {selectedModel.category === "image-to-video" 
                             ? "Configure your settings on the left, upload an image, and click 'Generate Video' to create your AI video!"
                             : "Configure your settings on the left and click 'Generate Video' to create your AI masterpiece!"
-                          }
-                        </p>
+                            }
+                          </p>
                       </div>
                     )}
                   </CardContent>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
+import { uploadVirtualTryOnToS3, generateFileName, isS3Configured } from '@/lib/s3-service';
 
 // Helper function to convert image URL to base64
 async function imageUrlToBase64(imageUrl: string): Promise<string> {
@@ -148,15 +149,54 @@ export async function POST(request: NextRequest) {
 
     // Convert response to base64
     const base64Image = Buffer.from(response.data, 'binary').toString('base64');
+    const imageDataUrl = `data:image/png;base64,${base64Image}`;
+    
+    let s3Url = null;
+    let s3UploadError = null;
+
+    // Try to upload to S3 if configured
+    if (isS3Configured()) {
+      try {
+        console.log('Uploading virtual try-on result to S3...');
+        const imageBuffer = Buffer.from(response.data, 'binary');
+        const fileName = generateFileName('virtual-tryon', 'idm-vton');
+        
+        const uploadResult = await uploadVirtualTryOnToS3(imageBuffer, fileName, {
+          category,
+          garment_description: garment_des,
+          steps: steps.toString(),
+          seed: seed.toString(),
+          human_img_type: human_img.startsWith('http') ? 'url' : 'base64',
+          garm_img_type: garm_img.startsWith('http') ? 'url' : 'base64'
+        });
+
+        if (uploadResult.success) {
+          s3Url = uploadResult.url;
+          console.log('Successfully uploaded virtual try-on result to S3:', s3Url);
+        } else {
+          s3UploadError = uploadResult.error;
+          console.error('Failed to upload virtual try-on result to S3:', uploadResult.error);
+        }
+      } catch (error) {
+        s3UploadError = error instanceof Error ? error.message : 'S3 upload failed';
+        console.error('S3 upload error:', error);
+      }
+    }
     
     return NextResponse.json({
       success: true,
-      image: `data:image/png;base64,${base64Image}`,
+      image: imageDataUrl,
+      s3Url: s3Url,
       metadata: {
         category,
         garment_description: garment_des,
         steps,
-        seed
+        seed,
+        s3Upload: {
+          enabled: isS3Configured(),
+          success: !!s3Url,
+          error: s3UploadError
+        }
       }
     });
 

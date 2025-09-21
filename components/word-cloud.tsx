@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Cloud, TrendingUp, Hash, MessageCircle, Globe, BarChart3, Sparkles } from "lucide-react";
+import { TrendingUp, Hash, MessageCircle, Globe, BarChart3 } from "lucide-react";
 import { 
   loadRegionalData, 
   WordCloudData, 
@@ -18,32 +18,7 @@ import {
   COUNTRY_NAMES,
   COUNTRY_COLORS 
 } from "@/lib/data-parser";
-import { TrendingChart } from "./trending-chart";
 import dynamic from "next/dynamic";
-
-const EChartsWordCloud = dynamic(() => import("./echarts-wordcloud"), {
-  ssr: false,
-  loading: () => (
-    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 rounded-xl border shadow-sm flex items-center justify-center" style={{ height: '700px' }}>
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading ECharts WordCloud...</p>
-      </div>
-    </div>
-  ),
-});
-
-const SimpleWordCloud = dynamic(() => import("./simple-wordcloud"), {
-  ssr: false,
-  loading: () => (
-    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 rounded-xl border shadow-sm flex items-center justify-center" style={{ height: '600px' }}>
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading Simple WordCloud...</p>
-      </div>
-    </div>
-  ),
-});
 
 const ReactWordCloudComponent = dynamic(() => import("./react-wordcloud-component"), {
   ssr: false,
@@ -51,7 +26,7 @@ const ReactWordCloudComponent = dynamic(() => import("./react-wordcloud-componen
     <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 rounded-xl border shadow-sm flex items-center justify-center" style={{ height: '600px' }}>
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading React WordCloud...</p>
+        <p className="text-gray-600">Loading WordCloud...</p>
       </div>
     </div>
   ),
@@ -482,17 +457,32 @@ const sampleRankingData = [
 // Hashtag ranking table component
 function HashtagRankingTable({ 
   data, 
-  onShowAnalytics 
+  keyCountries 
 }: { 
   data: WordCloudData[], 
-  onShowAnalytics: (hashtag: WordCloudData) => void 
+  keyCountries: Array<{code: string, name: string, color: string}>
 }) {
   const [showNewToTop100, setShowNewToTop100] = useState(false);
   const [timeRange, setTimeRange] = useState("Last 7 days");
+  const [selectedRegion, setSelectedRegion] = useState<string>("all");
+  const [displayCount, setDisplayCount] = useState<number>(30);
 
-  // Use real data instead of sample data
-  const rankingData = data.slice(0, 10).map((hashtag, index) => ({
-    rank: hashtag.rank || index + 1,
+  // Filter data based on selected region and show up to 60 ranks
+  const getFilteredData = (): WordCloudData[] => {
+    let filteredData = data;
+    
+    if (selectedRegion !== "all") {
+      filteredData = data.filter(item => item.country === selectedRegion);
+    }
+    
+    return filteredData.slice(0, Math.min(displayCount, 60));
+  };
+
+  const filteredData = getFilteredData();
+
+  // Use filtered data and show proper ranking
+  const rankingData = filteredData.map((hashtag, index) => ({
+    rank: index + 1, // Always start from 1 for filtered results
     hashtag: `#${hashtag.text}`,
     posts: hashtag.publish_cnt ? `${(hashtag.publish_cnt / 1000).toFixed(1)}K` : "N/A",
     trend: hashtag.trend || "stable",
@@ -503,8 +493,10 @@ function HashtagRankingTable({
     })) || [
       { name: "Creator", avatar: "/placeholder-user.jpg" }
     ],
-    isNewToTop100: hashtag.rank ? hashtag.rank > 50 : false,
-    hashtagData: hashtag
+    isNewToTop100: index >= 50,
+    hashtagData: hashtag,
+    region: hashtag.region,
+    country: hashtag.country
   }));
 
   return (
@@ -531,15 +523,18 @@ function HashtagRankingTable({
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border">
+      <div className="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm border flex-wrap">
         <select 
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-          value="Industry"
+          value={selectedRegion}
+          onChange={(e) => setSelectedRegion(e.target.value)}
         >
-          <option>Industry</option>
-          <option>Fashion</option>
-          <option>Tech</option>
-          <option>Food</option>
+          <option value="all">All Regions</option>
+          {keyCountries.map(country => (
+            <option key={country.code} value={country.code}>
+              {country.name}
+            </option>
+          ))}
         </select>
         
         <select 
@@ -552,6 +547,19 @@ function HashtagRankingTable({
           <option>Last 90 days</option>
         </select>
 
+        <select 
+          className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          value={displayCount}
+          onChange={(e) => setDisplayCount(Number(e.target.value))}
+        >
+          <option value={10}>Top 10</option>
+          <option value={20}>Top 20</option>
+          <option value={30}>Top 30</option>
+          <option value={40}>Top 40</option>
+          <option value={50}>Top 50</option>
+          <option value={60}>Top 60</option>
+        </select>
+
         <label className="flex items-center gap-2 text-sm">
           <input 
             type="checkbox" 
@@ -559,14 +567,12 @@ function HashtagRankingTable({
             onChange={(e) => setShowNewToTop100(e.target.checked)}
             className="rounded border-gray-300"
           />
-          New to top 100
+          New to top {displayCount}
         </label>
 
-        <div className="ml-auto bg-pink-100 text-pink-800 px-3 py-1 rounded-full text-sm">
-          Access detail page for more insights of the trend
-          <Button size="sm" className="ml-2 bg-pink-500 hover:bg-pink-600 text-white px-3 py-1 text-xs rounded-full">
-            Got it
-          </Button>
+        <div className="ml-auto bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+          Showing ranks 1-{Math.min(filteredData.length, displayCount)} 
+          {selectedRegion !== "all" ? ` for ${keyCountries.find(c => c.code === selectedRegion)?.name}` : " (All regions)"}
         </div>
       </div>
 
@@ -579,8 +585,8 @@ function HashtagRankingTable({
               <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">Hashtags</th>
               <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">Posts</th>
               <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">Trend</th>
+              <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">Region</th>
               <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm">Creators</th>
-              <th className="text-left py-4 px-6 font-semibold text-gray-900 text-sm"></th>
             </tr>
           </thead>
           <tbody>
@@ -643,6 +649,23 @@ function HashtagRankingTable({
                   </div>
                 </td>
                 <td className="py-4 px-6">
+                  <div className="space-y-1">
+                    {item.country && (
+                      <div className="text-sm font-medium text-gray-700">
+                        {keyCountries.find(c => c.code === item.country)?.name || item.country}
+                      </div>
+                    )}
+                    {item.region && (
+                      <div className="text-xs text-gray-500">
+                        {item.region}
+                      </div>
+                    )}
+                    {!item.country && !item.region && (
+                      <div className="text-xs text-gray-400">Global</div>
+                    )}
+                  </div>
+                </td>
+                <td className="py-4 px-6">
                   <div className="flex -space-x-2">
                     {item.creators.slice(0, 3).map((creator, creatorIndex) => (
                       <div
@@ -658,16 +681,6 @@ function HashtagRankingTable({
                     ))}
                   </div>
                 </td>
-                <td className="py-4 px-6">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-gray-600 border-gray-300 hover:bg-gray-50 font-medium"
-                    onClick={() => onShowAnalytics(item.hashtagData)}
-                  >
-                    See analytics
-                  </Button>
-                </td>
               </tr>
             ))}
           </tbody>
@@ -679,7 +692,6 @@ function HashtagRankingTable({
 
 export function AnalyticsWordCloud() {
   const [activeDataset, setActiveDataset] = useState<"comprehensive" | "apparel">("comprehensive");
-  const [wordcloudType, setWordcloudType] = useState<"echarts" | "simple" | "react">("react");
   const [regionalData, setRegionalData] = useState<{
     generalData: WordCloudData[];
     fashionData: WordCloudData[];
@@ -687,8 +699,6 @@ export function AnalyticsWordCloud() {
     fashionSummary: any;
   }>({ generalData: [], fashionData: [], generalSummary: null, fashionSummary: null });
   const [loading, setLoading] = useState(true);
-  const [selectedHashtag, setSelectedHashtag] = useState<WordCloudData | null>(null);
-  const [showTrendingChart, setShowTrendingChart] = useState(false);
 
   // Key Asian countries for easy selection
   const keyCountries = [
@@ -825,103 +835,17 @@ export function AnalyticsWordCloud() {
           </div>
         </div>
 
-        {/* WordCloud Type Selection */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">WordCloud Engine</h3>
-              <p className="text-sm text-gray-600">Choose the visualization engine for the wordcloud</p>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <Button
-                variant={wordcloudType === "react" ? "default" : "outline"}
-                onClick={() => setWordcloudType("react")}
-                className="flex items-center gap-2"
-                size="lg"
-              >
-                <Sparkles className="h-5 w-5" />
-                <div className="text-left">
-                  <div className="font-semibold">React WordCloud</div>
-                  <div className="text-xs opacity-80">Professional, reliable, animated</div>
-                </div>
-              </Button>
-
-              <Button
-                variant={wordcloudType === "simple" ? "default" : "outline"}
-                onClick={() => setWordcloudType("simple")}
-                className="flex items-center gap-2"
-                size="lg"
-              >
-                <Cloud className="h-5 w-5" />
-                <div className="text-left">
-                  <div className="font-semibold">Simple WordCloud</div>
-                  <div className="text-xs opacity-80">CSS-based, reliable</div>
-                </div>
-              </Button>
-              
-              <Button
-                variant={wordcloudType === "echarts" ? "default" : "outline"}
-                onClick={() => setWordcloudType("echarts")}
-                className="flex items-center gap-2"
-                size="lg"
-              >
-                <BarChart3 className="h-5 w-5" />
-                <div className="text-left">
-                  <div className="font-semibold">ECharts WordCloud</div>
-                  <div className="text-xs opacity-80">Advanced shapes, may have Canvas issues</div>
-                </div>
-              </Button>
-            </div>
-          </div>
-        </div>
 
         {/* WordCloud Display */}
-        {!loading && wordcloudType === "echarts" && (
-          <EChartsWordCloud
-            words={currentData}
-            title={activeDataset === "comprehensive" 
-              ? "Asian Markets - Complete Hashtag Analysis (All 480 Hashtags)" 
-              : "Apparel & Accessories - Complete Analysis (All 453 Unique Hashtags)"
-            }
-            totalHashtags={getCurrentSummary()?.total_hashtags_all_markets || 0}
-            uniqueHashtags={getCurrentSummary()?.grand_total_unique_hashtags || 0}
-            onShowAnalytics={(hashtag) => {
-              setSelectedHashtag(hashtag);
-              setShowTrendingChart(true);
-            }}
-          />
-        )}
-
-        {!loading && wordcloudType === "react" && (
+        {!loading && (
           <ReactWordCloudComponent
             words={currentData}
             title={activeDataset === "comprehensive" 
-              ? "Asian Markets - Professional Hashtag WordCloud (All 480 Hashtags)" 
-              : "Apparel & Accessories - Professional WordCloud (All 453 Unique Hashtags)"
+              ? "Asian Markets - Hashtag WordCloud (All 480 Hashtags)" 
+              : "Apparel & Accessories - WordCloud (All 453 Unique Hashtags)"
             }
             totalHashtags={getCurrentSummary()?.total_hashtags_all_markets || 0}
             uniqueHashtags={getCurrentSummary()?.grand_total_unique_hashtags || 0}
-            onShowAnalytics={(hashtag) => {
-              setSelectedHashtag(hashtag);
-              setShowTrendingChart(true);
-            }}
-          />
-        )}
-
-        {!loading && wordcloudType === "simple" && (
-          <SimpleWordCloud
-            words={currentData}
-            title={activeDataset === "comprehensive" 
-              ? "Asian Markets - Interactive Hashtag WordCloud (All 480 Hashtags)" 
-              : "Apparel & Accessories - Interactive WordCloud (All 453 Unique Hashtags)"
-            }
-            totalHashtags={getCurrentSummary()?.total_hashtags_all_markets || 0}
-            uniqueHashtags={getCurrentSummary()?.grand_total_unique_hashtags || 0}
-            onShowAnalytics={(hashtag) => {
-              setSelectedHashtag(hashtag);
-              setShowTrendingChart(true);
-            }}
           />
         )}
 
@@ -941,22 +865,9 @@ export function AnalyticsWordCloud() {
         {!loading && (
           <HashtagRankingTable 
             data={currentData} 
-            onShowAnalytics={(hashtag) => {
-              setSelectedHashtag(hashtag);
-              setShowTrendingChart(true);
-            }}
+            keyCountries={keyCountries}
           />
         )}
-
-        {/* Trending Chart Modal */}
-        <TrendingChart
-          isOpen={showTrendingChart}
-          onClose={() => {
-            setShowTrendingChart(false);
-            setSelectedHashtag(null);
-          }}
-          hashtag={selectedHashtag}
-        />
       </div>
     </div>
   );

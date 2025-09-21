@@ -27,7 +27,9 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Cloud,
+  ExternalLink
 } from "lucide-react";
 
 interface ImageModel {
@@ -667,7 +669,7 @@ export default function ImageGenerationPage() {
                       <div className="w-full space-y-4">
                         <div className="relative">
                           <img
-                            src={result.imageUrl}
+                            src={result.s3Url || result.imageUrl}
                             alt="Generated"
                             className="max-w-full max-h-[60vh] w-auto h-auto rounded-lg shadow-lg mx-auto object-contain"
                           />
@@ -675,6 +677,12 @@ export default function ImageGenerationPage() {
                             <CheckCircle className="h-3 w-3 mr-1" />
                             Success
                           </Badge>
+                          {result.s3Url && (
+                            <Badge className="absolute top-2 left-2 bg-blue-500">
+                              <Cloud className="h-3 w-3 mr-1" />
+                              S3 Stored
+                            </Badge>
+                          )}
                         </div>
                         
                         {result.metadata && (
@@ -685,18 +693,46 @@ export default function ImageGenerationPage() {
                               <div>Resolution: {result.metadata.resolution}</div>
                               {result.metadata.seed && <div>Seed: {result.metadata.seed}</div>}
                               <div className="col-span-2">Prompt: {result.metadata.prompt}</div>
+                              {result.metadata.s3Upload && (
+                                <div className="col-span-2">
+                                  <div className={`text-xs p-2 rounded ${
+                                    result.metadata.s3Upload.success 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : 'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    <strong>S3 Storage:</strong> {
+                                      result.metadata.s3Upload.success 
+                                        ? '✅ Uploaded to AWS S3' 
+                                        : result.metadata.s3Upload.error || '⏳ Upload in progress'
+                                    }
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
 
-                        <Button
-                          onClick={downloadImage}
-                          className="w-full"
-                          variant="outline"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download Image
-                        </Button>
+                        <div className="space-y-2">
+                          <Button
+                            onClick={downloadImage}
+                            className="w-full"
+                            variant="outline"
+                          >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download Image
+                          </Button>
+                          
+                          {result.s3Url && (
+                            <Button
+                              onClick={() => window.open(result.s3Url, '_blank')}
+                              className="w-full"
+                              variant="outline"
+                            >
+                              <ExternalLink className="h-4 w-4 mr-2" />
+                              Open S3 URL
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     )}
 

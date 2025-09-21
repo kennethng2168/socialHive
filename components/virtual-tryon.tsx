@@ -28,11 +28,17 @@ import {
 interface VirtualTryOnResult {
   success: boolean;
   image?: string;
+  s3Url?: string;
   metadata?: {
     category: string;
     garment_description: string;
     steps: number;
     seed: number;
+    s3Upload?: {
+      enabled: boolean;
+      success: boolean;
+      error?: string;
+    };
   };
   error?: string;
   details?: string;
@@ -632,7 +638,7 @@ export function VirtualTryOn() {
                 <div className="w-full space-y-4">
                   <div className="relative">
                     <img
-                      src={result.image}
+                      src={result.s3Url || result.image}
                       alt="Virtual try-on result"
                       className="max-w-full max-h-[60vh] w-auto h-auto rounded-lg shadow-lg mx-auto object-contain"
                     />
@@ -640,6 +646,12 @@ export function VirtualTryOn() {
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Success
                     </Badge>
+                    {result.s3Url && (
+                      <Badge className="absolute top-2 left-2 bg-blue-500">
+                        <Cloud className="h-3 w-3 mr-1" />
+                        S3 Stored
+                      </Badge>
+                    )}
                   </div>
                   
                   {result.metadata && (
@@ -649,18 +661,46 @@ export function VirtualTryOn() {
                         <div>Category: {result.metadata.category}</div>
                         <div>Steps: {result.metadata.steps}</div>
                         <div className="col-span-2">Description: {result.metadata.garment_description}</div>
+                        {result.metadata.s3Upload && (
+                          <div className="col-span-2">
+                            <div className={`text-xs p-2 rounded ${
+                              result.metadata.s3Upload.success 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              <strong>S3 Storage:</strong> {
+                                result.metadata.s3Upload.success 
+                                  ? '✅ Uploaded to AWS S3' 
+                                  : result.metadata.s3Upload.error || '⏳ Upload in progress'
+                              }
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
-                  <Button
-                    onClick={downloadImage}
-                    className="w-full flex items-center gap-2"
-                    variant="outline"
-                  >
-                    <Download className="h-4 w-4" />
-                    Download Result
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      onClick={downloadImage}
+                      className="w-full flex items-center gap-2"
+                      variant="outline"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download Result
+                    </Button>
+                    
+                    {result.s3Url && (
+                      <Button
+                        onClick={() => window.open(result.s3Url, '_blank')}
+                        className="w-full flex items-center gap-2"
+                        variant="outline"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Open S3 URL
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
 
