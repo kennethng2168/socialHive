@@ -59,228 +59,39 @@ interface GenerationResult {
 }
 
 const videoModels: VideoModel[] = [
-  // Google Models
-  {
-    id: "google-veo3",
-    name: "Google Veo3",
-    provider: "Google",
-    description: "Latest Google video generation model with exceptional quality",
-    speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["5s", "10s", "20s"],
-    features: ["High Quality", "Photorealistic", "Latest Version"],
-    category: "text-to-video"
-  },
-  {
-    id: "google-veo3-fast",
-    name: "Google Veo3 Fast",
-    provider: "Google",
-    description: "Fast version of Veo3 for quick video generation",
-    speed: "Fast",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["5s", "10s"],
-    features: ["Fast Generation", "Good Quality"],
-    category: "text-to-video"
-  },
-  {
-    id: "google-veo3-image-to-video",
-    name: "Google Veo3 Image to Video",
-    provider: "Google",
-    description: "Convert static images to videos with Veo3",
-    speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["5s", "10s"],
-    features: ["Image to Video", "High Quality"],
-    category: "image-to-video"
-  },
+  // Google Models - Working models from WaveSpeed AI
   {
     id: "google-veo3-fast-image-to-video",
     name: "Google Veo3 Fast I2V",
     provider: "Google",
-    description: "Fast image to video conversion",
+    description: "Fast image-to-video with Veo3 - 30% faster, 80% cost reduction",
     speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["5s"],
-    features: ["Fast I2V", "Quick Results"],
+    resolution: ["720p", "1080p"],
+    duration: ["8s"],
+    features: ["Fast Generation", "Cost Effective", "Audio Support"],
     category: "image-to-video"
   },
   {
-    id: "google-veo2",
-    name: "Google Veo2",
+    id: "google-veo3-image-to-video",
+    name: "Google Veo3 I2V",
     provider: "Google",
-    description: "Previous generation Google video model",
+    description: "High-quality image-to-video conversion with Veo3",
     speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["5s", "10s"],
-    features: ["Reliable", "Proven Quality"],
-    category: "text-to-video"
-  },
-  {
-    id: "google-veo2-image-to-video",
-    name: "Google Veo2 Image to Video",
-    provider: "Google",
-    description: "Image to video with Veo2",
-    speed: "Standard",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s"],
-    features: ["Image to Video", "Reliable"],
+    resolution: ["720p", "1080p"],
+    duration: ["8s"],
+    features: ["High Quality", "Image to Video", "Audio Support"],
     category: "image-to-video"
   },
 
-  // ByteDance Models
-  {
-    id: "bytedance-dreamina-v3.0-text-to-video-1080p",
-    name: "ByteDance Dreamina V3.0 T2V 1080p",
-    provider: "ByteDance",
-    description: "High resolution text to video generation",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["5s", "10s", "15s"],
-    features: ["1080p", "High Quality", "Advanced AI"],
-    category: "text-to-video"
-  },
-  {
-    id: "bytedance-dreamina-v3.0-text-to-video-720p",
-    name: "ByteDance Dreamina V3.0 T2V 720p",
-    provider: "ByteDance",
-    description: "Standard resolution text to video",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s", "15s"],
-    features: ["720p", "Fast Generation"],
-    category: "text-to-video"
-  },
-  {
-    id: "bytedance-dreamina-v3.0-image-to-video-1080p",
-    name: "ByteDance Dreamina V3.0 I2V 1080p",
-    provider: "ByteDance",
-    description: "High quality image to video conversion",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["5s", "10s"],
-    features: ["1080p", "I2V", "High Quality"],
-    category: "image-to-video"
-  },
-  {
-    id: "bytedance-dreamina-v3.0-image-to-video-720p",
-    name: "ByteDance Dreamina V3.0 I2V 720p",
-    provider: "ByteDance",
-    description: "Fast image to video conversion",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s"],
-    features: ["720p", "Fast I2V"],
-    category: "image-to-video"
-  },
-  {
-    id: "bytedance-dreamina-v3.0-pro-text-to-video",
-    name: "ByteDance Dreamina V3.0 Pro T2V",
-    provider: "ByteDance",
-    description: "Professional grade text to video",
-    speed: "Pro",
-    resolution: ["1920x1080", "2560x1440"],
-    duration: ["10s", "20s", "30s"],
-    features: ["Pro Quality", "Extended Duration", "Professional"],
-    category: "text-to-video"
-  },
-  {
-    id: "bytedance-dreamina-v3.0-pro-image-to-video",
-    name: "ByteDance Dreamina V3.0 Pro I2V",
-    provider: "ByteDance",
-    description: "Professional image to video conversion",
-    speed: "Pro",
-    resolution: ["1920x1080", "2560x1440"],
-    duration: ["10s", "20s"],
-    features: ["Pro Quality", "High Resolution", "Professional"],
-    category: "image-to-video"
-  },
-  {
-    id: "bytedance-seedance-v1-lite-t2v-1080p",
-    name: "ByteDance Seedance V1 Lite T2V 1080p",
-    provider: "ByteDance",
-    description: "Lite version for fast high-res generation",
-    speed: "Fast",
-    resolution: ["1920x1080"],
-    duration: ["5s", "10s"],
-    features: ["Lite Version", "1080p", "Fast"],
-    category: "text-to-video"
-  },
-  {
-    id: "bytedance-seedance-v1-lite-t2v-720p",
-    name: "ByteDance Seedance V1 Lite T2V 720p",
-    provider: "ByteDance",
-    description: "Lite version for fast standard generation",
-    speed: "Ultra Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s"],
-    features: ["Lite", "720p", "Ultra Fast"],
-    category: "text-to-video"
-  },
-  {
-    id: "bytedance-seedance-v1-lite-t2v-480p",
-    name: "ByteDance Seedance V1 Lite T2V 480p",
-    provider: "ByteDance",
-    description: "Ultra fast low resolution generation",
-    speed: "Ultra Fast",
-    resolution: ["854x480"],
-    duration: ["5s", "10s"],
-    features: ["480p", "Ultra Fast", "Quick Preview"],
-    category: "text-to-video"
-  },
-  {
-    id: "bytedance-seedance-v1-pro-t2v-1080p",
-    name: "ByteDance Seedance V1 Pro T2V 1080p",
-    provider: "ByteDance",
-    description: "Professional text to video generation",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["10s", "20s", "30s"],
-    features: ["Pro Quality", "1080p", "Extended Duration"],
-    category: "text-to-video"
-  },
-  {
-    id: "bytedance-lipsync-audio-to-video",
-    name: "ByteDance Lipsync Audio to Video",
-    provider: "ByteDance",
-    description: "Sync video with audio for realistic lipsync",
-    speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["Variable"],
-    features: ["Lipsync", "Audio Sync", "Realistic"],
-    category: "lipsync"
-  },
-
-  // Kwaivgi (Kling) Models
-  {
-    id: "kwaivgi-kling-v2.1-t2v-master",
-    name: "Kling V2.1 T2V Master",
-    provider: "Kwaivgi",
-    description: "Master version of Kling with superior quality",
-    speed: "Pro",
-    resolution: ["1920x1080", "2560x1440"],
-    duration: ["10s", "20s", "30s"],
-    features: ["Master Quality", "Superior", "Latest Version"],
-    category: "text-to-video"
-  },
-  {
-    id: "kwaivgi-kling-v2.1-i2v-master",
-    name: "Kling V2.1 I2V Master",
-    provider: "Kwaivgi",
-    description: "Master image to video conversion",
-    speed: "Pro",
-    resolution: ["1920x1080", "2560x1440"],
-    duration: ["10s", "20s"],
-    features: ["Master Quality", "I2V", "Superior"],
-    category: "image-to-video"
-  },
+  // Kwaivgi (Kling) Models - Working models from WaveSpeed AI
   {
     id: "kwaivgi-kling-v2.1-i2v-pro",
     name: "Kling V2.1 I2V Pro",
     provider: "Kwaivgi",
-    description: "Professional image to video conversion",
+    description: "Professional image-to-video conversion with Kling V2.1",
     speed: "Standard",
     resolution: ["1920x1080"],
-    duration: ["5s", "10s", "15s"],
+    duration: ["5s", "10s"],
     features: ["Pro Quality", "I2V", "Flexible Duration"],
     category: "image-to-video"
   },
@@ -288,7 +99,7 @@ const videoModels: VideoModel[] = [
     id: "kwaivgi-kling-v2.1-i2v-standard",
     name: "Kling V2.1 I2V Standard",
     provider: "Kwaivgi",
-    description: "Standard image to video conversion",
+    description: "Standard image-to-video conversion with Kling V2.1",
     speed: "Fast",
     resolution: ["1280x720"],
     duration: ["5s", "10s"],
@@ -296,409 +107,27 @@ const videoModels: VideoModel[] = [
     category: "image-to-video"
   },
   {
-    id: "kwaivgi-kling-v2.0-t2v-master",
-    name: "Kling V2.0 T2V Master",
+    id: "kwaivgi-kling-v2.1-t2v-master",
+    name: "Kling V2.1 T2V Master",
     provider: "Kwaivgi",
-    description: "Previous master version with proven quality",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["10s", "20s"],
-    features: ["Master", "Proven Quality", "V2.0"],
-    category: "text-to-video"
-  },
-  {
-    id: "kwaivgi-kling-v2.0-i2v-master",
-    name: "Kling V2.0 I2V Master",
-    provider: "Kwaivgi",
-    description: "V2.0 master image to video",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["10s", "20s"],
-    features: ["Master", "I2V", "V2.0"],
-    category: "image-to-video"
-  },
-  {
-    id: "kwaivgi-kling-v1.6-t2v-standard",
-    name: "Kling V1.6 T2V Standard",
-    provider: "Kwaivgi",
-    description: "Reliable standard text to video",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s"],
-    features: ["Standard", "Reliable", "Fast"],
-    category: "text-to-video"
-  },
-  {
-    id: "kwaivgi-kling-v1.6-i2v-pro",
-    name: "Kling V1.6 I2V Pro",
-    provider: "Kwaivgi",
-    description: "Professional V1.6 image to video",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["5s", "10s", "15s"],
-    features: ["Pro", "V1.6", "I2V"],
-    category: "image-to-video"
-  },
-  {
-    id: "kwaivgi-kling-v1.6-i2v-standard",
-    name: "Kling V1.6 I2V Standard",
-    provider: "Kwaivgi",
-    description: "Standard V1.6 image to video",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s"],
-    features: ["Standard", "Fast", "I2V"],
-    category: "image-to-video"
-  },
-  {
-    id: "kwaivgi-kling-lipsync-audio-to-video",
-    name: "Kling Lipsync Audio to Video",
-    provider: "Kwaivgi",
-    description: "Advanced lipsync with audio synchronization",
-    speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["Variable"],
-    features: ["Lipsync", "Audio Sync", "Advanced"],
-    category: "lipsync"
-  },
-  {
-    id: "kwaivgi-kling-lipsync-text-to-video",
-    name: "Kling Lipsync Text to Video",
-    provider: "Kwaivgi",
-    description: "Generate lipsync videos from text",
-    speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["Variable"],
-    features: ["Text Lipsync", "Speaking Video", "Advanced"],
-    category: "lipsync"
-  },
-
-  // Minimax Models
-  {
-    id: "minimax-hailuo-02-pro",
-    name: "Minimax Hailuo 02 Pro",
-    provider: "Minimax",
-    description: "Professional grade video generation",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["10s", "20s", "30s"],
-    features: ["Pro Quality", "Extended Duration", "Advanced"],
-    category: "text-to-video"
-  },
-  {
-    id: "minimax-hailuo-02-standard",
-    name: "Minimax Hailuo 02 Standard",
-    provider: "Minimax",
-    description: "Standard quality video generation",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s", "15s"],
-    features: ["Standard Quality", "Fast", "Reliable"],
-    category: "text-to-video"
-  },
-  {
-    id: "minimax-hailuo-02-fast",
-    name: "Minimax Hailuo 02 Fast",
-    provider: "Minimax",
-    description: "Fast video generation for quick results",
-    speed: "Ultra Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s"],
-    features: ["Ultra Fast", "Quick Results", "Good Quality"],
-    category: "text-to-video"
-  },
-  {
-    id: "minimax-hailuo-02-t2v-pro",
-    name: "Minimax Hailuo 02 T2V Pro",
-    provider: "Minimax",
-    description: "Professional text to video generation",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["10s", "20s"],
-    features: ["T2V Pro", "Professional", "High Quality"],
-    category: "text-to-video"
-  },
-  {
-    id: "minimax-hailuo-02-i2v-pro",
-    name: "Minimax Hailuo 02 I2V Pro",
-    provider: "Minimax",
-    description: "Professional image to video conversion",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["5s", "10s", "15s"],
-    features: ["I2V Pro", "Professional", "High Quality"],
-    category: "image-to-video"
-  },
-  {
-    id: "minimax-video-02",
-    name: "Minimax Video 02",
-    provider: "Minimax",
-    description: "Latest Minimax video generation model",
-    speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["5s", "10s", "20s"],
-    features: ["Latest Version", "Improved Quality", "Flexible"],
-    category: "text-to-video"
-  },
-  {
-    id: "minimax-video-01",
-    name: "Minimax Video 01",
-    provider: "Minimax",
-    description: "Previous generation with proven reliability",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s"],
-    features: ["Proven", "Reliable", "Fast"],
-    category: "text-to-video"
-  },
-
-  // Pika Models
-  {
-    id: "pika-v2.2-t2v",
-    name: "Pika V2.2 T2V",
-    provider: "Pika",
-    description: "Latest Pika text to video model",
-    speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["3s", "5s", "10s"],
-    features: ["Latest Version", "Creative", "High Quality"],
-    category: "text-to-video"
-  },
-  {
-    id: "pika-v2.2-i2v",
-    name: "Pika V2.2 I2V",
-    provider: "Pika",
-    description: "Latest Pika image to video model",
-    speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["3s", "5s", "10s"],
-    features: ["Latest Version", "I2V", "Creative"],
-    category: "image-to-video"
-  },
-  {
-    id: "pika-v2.1-t2v",
-    name: "Pika V2.1 T2V",
-    provider: "Pika",
-    description: "Previous Pika text to video model",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["3s", "5s"],
-    features: ["V2.1", "Fast", "Creative"],
-    category: "text-to-video"
-  },
-  {
-    id: "pika-v2.1-i2v",
-    name: "Pika V2.1 I2V",
-    provider: "Pika",
-    description: "Previous Pika image to video model",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["3s", "5s"],
-    features: ["V2.1", "I2V", "Fast"],
-    category: "image-to-video"
-  },
-  {
-    id: "pika-v2.0-turbo-t2v",
-    name: "Pika V2.0 Turbo T2V",
-    provider: "Pika",
-    description: "Turbo version for ultra fast generation",
-    speed: "Ultra Fast",
-    resolution: ["1280x720"],
-    duration: ["3s", "5s"],
-    features: ["Turbo", "Ultra Fast", "Quick Results"],
-    category: "text-to-video"
-  },
-  {
-    id: "pika-v2.0-turbo-i2v",
-    name: "Pika V2.0 Turbo I2V",
-    provider: "Pika",
-    description: "Turbo image to video conversion",
-    speed: "Ultra Fast",
-    resolution: ["1280x720"],
-    duration: ["3s", "5s"],
-    features: ["Turbo", "I2V", "Ultra Fast"],
-    category: "image-to-video"
-  },
-
-  // RunwayML Models
-  {
-    id: "runwayml-gen4-aleph",
-    name: "RunwayML Gen4 Aleph",
-    provider: "RunwayML",
-    description: "Latest Gen4 model with Aleph architecture",
+    description: "Master version of Kling with superior text-to-video quality",
     speed: "Pro",
     resolution: ["1920x1080", "2560x1440"],
-    duration: ["10s", "20s", "30s"],
-    features: ["Gen4", "Aleph", "Professional", "Extended Duration"],
-    category: "text-to-video"
-  },
-  {
-    id: "runwayml-gen4-image",
-    name: "RunwayML Gen4 Image",
-    provider: "RunwayML",
-    description: "Gen4 model optimized for image to video",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["5s", "10s", "15s"],
-    features: ["Gen4", "I2V Optimized", "High Quality"],
-    category: "image-to-video"
-  },
-  {
-    id: "runwayml-gen4-image-turbo",
-    name: "RunwayML Gen4 Image Turbo",
-    provider: "RunwayML",
-    description: "Turbo version for fast image to video",
-    speed: "Fast",
-    resolution: ["1280x720", "1920x1080"],
     duration: ["5s", "10s"],
-    features: ["Gen4", "Turbo", "Fast I2V"],
-    category: "image-to-video"
-  },
-  {
-    id: "runwayml-gen4-turbo",
-    name: "RunwayML Gen4 Turbo",
-    provider: "RunwayML",
-    description: "Turbo version for fast text to video",
-    speed: "Fast",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["5s", "10s"],
-    features: ["Gen4", "Turbo", "Fast T2V"],
+    features: ["Master Quality", "Superior", "Latest Version"],
     category: "text-to-video"
   },
 
-  // WaveSpeed AI Models
+  // Pixverse Models
   {
-    id: "wan-2.2-t2v-plus-1080p",
-    name: "WAN 2.2 T2V Plus 1080p",
-    provider: "WaveSpeed AI",
-    description: "Latest WAN model with enhanced quality",
+    id: "pixverse-pixverse-v5-t2v",
+    name: "Pixverse V5 T2V",
+    provider: "Pixverse",
+    description: "Advanced text-to-video generation with Pixverse V5",
     speed: "Standard",
-    resolution: ["1920x1080"],
+    resolution: ["1280x720", "1920x1080"],
     duration: ["5s", "10s", "20s"],
-    features: ["Latest WAN", "Plus Version", "1080p"],
-    category: "text-to-video"
-  },
-  {
-    id: "wan-2.2-i2v-plus-1080p",
-    name: "WAN 2.2 I2V Plus 1080p",
-    provider: "WaveSpeed AI",
-    description: "Enhanced image to video conversion",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["5s", "10s", "15s"],
-    features: ["Latest WAN", "I2V Plus", "1080p"],
-    category: "image-to-video"
-  },
-  {
-    id: "wan-2.1-t2v-720p",
-    name: "WAN 2.1 T2V 720p",
-    provider: "WaveSpeed AI",
-    description: "Standard resolution text to video",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s", "15s"],
-    features: ["WAN 2.1", "720p", "Fast"],
-    category: "text-to-video"
-  },
-  {
-    id: "wan-2.1-i2v-720p",
-    name: "WAN 2.1 I2V 720p",
-    provider: "WaveSpeed AI",
-    description: "Standard image to video conversion",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s"],
-    features: ["WAN 2.1", "I2V", "720p"],
-    category: "image-to-video"
-  },
-  {
-    id: "wan-2.1-t2v-480p-ultra-fast",
-    name: "WAN 2.1 T2V 480p Ultra Fast",
-    provider: "WaveSpeed AI",
-    description: "Ultra fast low resolution generation",
-    speed: "Ultra Fast",
-    resolution: ["854x480"],
-    duration: ["5s", "10s"],
-    features: ["Ultra Fast", "480p", "Quick Preview"],
-    category: "text-to-video"
-  },
-  {
-    id: "wan-2.1-i2v-480p-ultra-fast",
-    name: "WAN 2.1 I2V 480p Ultra Fast",
-    provider: "WaveSpeed AI",
-    description: "Ultra fast image to video preview",
-    speed: "Ultra Fast",
-    resolution: ["854x480"],
-    duration: ["5s"],
-    features: ["Ultra Fast", "I2V", "480p"],
-    category: "image-to-video"
-  },
-  {
-    id: "ltx-video-v097-i2v-720p",
-    name: "LTX Video V0.97 I2V 720p",
-    provider: "WaveSpeed AI",
-    description: "LTX model for image to video conversion",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s"],
-    features: ["LTX", "I2V", "720p"],
-    category: "image-to-video"
-  },
-  {
-    id: "ltx-video-v097-i2v-480p",
-    name: "LTX Video V0.97 I2V 480p",
-    provider: "WaveSpeed AI",
-    description: "Fast LTX image to video",
-    speed: "Ultra Fast",
-    resolution: ["854x480"],
-    duration: ["5s"],
-    features: ["LTX", "Ultra Fast", "480p"],
-    category: "image-to-video"
-  },
-  {
-    id: "skyreels-v1",
-    name: "SkyReels V1",
-    provider: "WaveSpeed AI",
-    description: "Specialized model for cinematic videos",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["10s", "20s"],
-    features: ["Cinematic", "High Quality", "Professional"],
-    category: "text-to-video"
-  },
-  {
-    id: "hunyuan-video-t2v",
-    name: "Hunyuan Video T2V",
-    provider: "WaveSpeed AI",
-    description: "Chinese AI model for text to video",
-    speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["5s", "10s", "15s"],
-    features: ["Chinese AI", "T2V", "Advanced"],
-    category: "text-to-video"
-  },
-  {
-    id: "hunyuan-video-i2v",
-    name: "Hunyuan Video I2V",
-    provider: "WaveSpeed AI",
-    description: "Chinese AI model for image to video",
-    speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["5s", "10s"],
-    features: ["Chinese AI", "I2V", "Advanced"],
-    category: "image-to-video"
-  },
-
-  // OpenAI Models
-  {
-    id: "openai-sora",
-    name: "OpenAI Sora",
-    provider: "OpenAI",
-    description: "OpenAI's advanced video generation model",
-    speed: "Pro",
-    resolution: ["1920x1080", "1080x1920", "1024x1024"],
-    duration: ["10s", "20s", "60s"],
-    features: ["OpenAI", "Advanced", "Long Duration", "Multiple Ratios"],
+    features: ["High Quality", "Advanced AI", "Creative"],
     category: "text-to-video"
   }
 ];
@@ -727,13 +156,8 @@ export default function VideoGenerationPage() {
   const providers = [
     { id: "all", name: "All Providers" },
     { id: "Google", name: "Google" },
-    { id: "ByteDance", name: "ByteDance" },
     { id: "Kwaivgi", name: "Kwaivgi (Kling)" },
-    { id: "Minimax", name: "Minimax" },
-    { id: "Pika", name: "Pika" },
-    { id: "RunwayML", name: "RunwayML" },
-    { id: "WaveSpeed AI", name: "WaveSpeed AI" },
-    { id: "OpenAI", name: "OpenAI" }
+    { id: "Pixverse", name: "Pixverse" }
   ];
 
   const filteredModels = videoModels.filter(model => {
@@ -741,6 +165,78 @@ export default function VideoGenerationPage() {
     const providerMatch = selectedProvider === "all" || model.provider === selectedProvider;
     return categoryMatch && providerMatch;
   });
+
+  const pollForVideoResult = async (taskId: string): Promise<void> => {
+    let attempts = 0;
+    const maxAttempts = 120; // Maximum 4 minutes of polling for video
+    
+    while (attempts < maxAttempts) {
+      try {
+        const response = await fetch('/api/nanobanana', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ taskId })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Polling failed: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success && result.data?.data?.outputs?.length > 0) {
+          // Video is ready
+          setResult({
+            success: true,
+            videoUrl: result.data.data.outputs[0],
+            taskId: taskId,
+            metadata: {
+              model: selectedModel.name,
+              prompt,
+              resolution,
+              duration,
+              seed
+            }
+          });
+          setIsGenerating(false);
+          return;
+        } else if (result.data?.data?.status === 'failed') {
+          // Task failed
+          setResult({
+            success: false,
+            error: result.data?.data?.error || "Video generation failed",
+            taskId: taskId
+          });
+          setIsGenerating(false);
+          return;
+        }
+        
+        // Still processing, wait and retry
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        attempts++;
+        
+      } catch (error) {
+        console.error('Polling error:', error);
+        setResult({
+          success: false,
+          error: `Polling failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+          taskId: taskId
+        });
+        setIsGenerating(false);
+        return;
+      }
+    }
+    
+    // Timeout reached
+    setResult({
+      success: false,
+      error: "Video generation timed out. Please try again.",
+      taskId: taskId
+    });
+    setIsGenerating(false);
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim() && selectedModel.category === "text-to-video") {
@@ -763,7 +259,7 @@ export default function VideoGenerationPage() {
     setResult(null);
 
     try {
-      // Simulate API call to WaveSpeedAI
+      // Make initial request to WaveSpeedAI
       const formData = new FormData();
       formData.append('model', selectedModel.id);
       formData.append('prompt', prompt);
@@ -783,7 +279,20 @@ export default function VideoGenerationPage() {
       }
 
       const data = await response.json();
-      setResult(data);
+      
+      if (data.success && data.videoUrl) {
+        // Video is ready immediately
+        setResult(data);
+        setIsGenerating(false);
+      } else if (data.success && data.taskId) {
+        // Start polling for results
+        console.log('Starting polling for video task:', data.taskId);
+        await pollForVideoResult(data.taskId);
+      } else {
+        // Error occurred
+        setResult(data);
+        setIsGenerating(false);
+      }
 
     } catch (error) {
       console.error('Video generation error:', error);
@@ -798,7 +307,6 @@ export default function VideoGenerationPage() {
           seed
         }
       });
-    } finally {
       setIsGenerating(false);
     }
   };
@@ -837,14 +345,14 @@ export default function VideoGenerationPage() {
                 AI Video Generation Studio
               </h1>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Create stunning videos with state-of-the-art AI models from Google, ByteDance, Kling, Minimax, and more. 
+                Create stunning videos with state-of-the-art AI models from Google, Kwaivgi, and Pixverse. 
                 Generate videos in under 2 minutes with our ultra-fast models.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              {/* Model Selection */}
-              <div className="xl:col-span-1 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)]">
+              {/* Left Side - Settings */}
+              <div className="space-y-6 overflow-y-auto pr-2">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -989,10 +497,7 @@ export default function VideoGenerationPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-
-              {/* Generation Interface */}
-              <div className="xl:col-span-2 space-y-6">
+                {/* Generation Interface - Move to left column */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -1079,46 +584,46 @@ export default function VideoGenerationPage() {
                     </Button>
                   </CardContent>
                 </Card>
+              </div>
 
-                {/* Results */}
-                <Card>
+              {/* Right Side - Generated Video */}
+              <div className="h-full">
+                <Card className="h-full flex flex-col">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Video className="h-5 w-5" />
                       Generated Video
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex-1 flex flex-col justify-center items-center p-6">
                     {isGenerating && (
-                      <div className="flex items-center justify-center h-64">
-                        <div className="text-center space-y-4">
-                          <div className="relative">
-                            <Loader2 className="h-16 w-16 animate-spin text-purple-600 mx-auto" />
-                            <div className="absolute inset-0 rounded-full border-4 border-purple-200 animate-pulse"></div>
-                          </div>
-                          <div className="space-y-2">
-                            <h3 className="text-lg font-semibold">Generating with {selectedModel.name}</h3>
-                            <p className="text-purple-600 font-medium">
-                              {selectedModel.speed === "Ultra Fast" ? "⚡ Ultra Fast - Under 30 seconds" :
-                               selectedModel.speed === "Fast" ? "🚀 Fast - Under 1 minute" :
-                               selectedModel.speed === "Standard" ? "⏱️ Standard - Under 2 minutes" :
-                               "🎯 Pro - High Quality Processing"}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              Video generation typically takes longer than images. Please wait...
-                            </p>
-                          </div>
+                      <div className="text-center space-y-4">
+                        <div className="relative">
+                          <Loader2 className="h-16 w-16 animate-spin text-purple-600 mx-auto" />
+                          <div className="absolute inset-0 rounded-full border-4 border-purple-200 animate-pulse"></div>
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-semibold">Generating with {selectedModel.name}</h3>
+                          <p className="text-purple-600 font-medium">
+                            {selectedModel.speed === "Ultra Fast" ? "⚡ Ultra Fast - Under 30 seconds" :
+                             selectedModel.speed === "Fast" ? "🚀 Fast - Under 1 minute" :
+                             selectedModel.speed === "Standard" ? "⏱️ Standard - Under 2 minutes" :
+                             "🎯 Pro - High Quality Processing"}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Video generation typically takes longer than images. Please wait...
+                          </p>
                         </div>
                       </div>
                     )}
 
                     {result?.success && result.videoUrl && (
-                      <div className="space-y-4">
+                      <div className="w-full space-y-4">
                         <div className="relative">
                           <video
                             src={result.videoUrl}
                             controls
-                            className="w-full rounded-lg shadow-lg"
+                            className="max-w-full max-h-[60vh] w-auto h-auto rounded-lg shadow-lg mx-auto"
                             poster="/placeholder.jpg"
                           >
                             Your browser does not support the video tag.
@@ -1163,16 +668,15 @@ export default function VideoGenerationPage() {
                     )}
 
                     {!isGenerating && !result && (
-                      <div className="flex items-center justify-center h-64 text-center">
-                        <div>
-                          <Film className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                          <p className="text-gray-500">
-                            {selectedModel.category === "image-to-video" 
-                              ? "Upload an image and click 'Generate Video' to create your AI video!"
-                              : "Enter a prompt and click 'Generate Video' to create your AI masterpiece!"
-                            }
-                          </p>
-                        </div>
+                      <div className="text-center">
+                        <Film className="h-20 w-20 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-600 mb-2">Ready to Create</h3>
+                        <p className="text-gray-500 max-w-md mx-auto">
+                          {selectedModel.category === "image-to-video" 
+                            ? "Configure your settings on the left, upload an image, and click 'Generate Video' to create your AI video!"
+                            : "Configure your settings on the left and click 'Generate Video' to create your AI masterpiece!"
+                          }
+                        </p>
                       </div>
                     )}
                   </CardContent>

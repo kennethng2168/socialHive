@@ -293,9 +293,9 @@ export function VirtualTryOn() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input Section */}
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-300px)]">
+        {/* Left Side - Settings */}
+        <div className="space-y-6 overflow-y-auto pr-2">
           {/* Human Image Input */}
           <Card>
             <CardHeader>
@@ -588,9 +588,9 @@ export function VirtualTryOn() {
           </Card>
         </div>
 
-        {/* Result Section */}
-        <div className="space-y-6">
-          <Card className="h-full">
+        {/* Right Side - Virtual Try-On Result */}
+        <div className="h-full">
+          <Card className="h-full flex flex-col">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ImageIcon className="h-5 w-5 text-purple-600" />
@@ -600,43 +600,41 @@ export function VirtualTryOn() {
                 Your AI-generated fashion visualization will appear here
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex flex-col justify-center items-center p-6">
               {isLoading && (
-                <div className="flex items-center justify-center h-64">
-                  <div className="text-center space-y-6 w-full max-w-md">
+                <div className="text-center space-y-4">
                     <div className="relative">
                       <Loader2 className="h-16 w-16 animate-spin text-purple-600 mx-auto mb-4" />
                       <div className="absolute inset-0 rounded-full border-4 border-purple-200 animate-pulse"></div>
                     </div>
                     
-                    <div className="space-y-3">
-                      <h3 className="text-lg font-semibold text-gray-800">AI Virtual Try-On in Progress</h3>
-                      <p className="text-purple-600 font-medium">{loadingMessage}</p>
-                      
-                      <div className="space-y-2">
-                        <Progress value={loadingProgress} className="w-full h-2" />
-                        <div className="flex justify-between text-xs text-gray-500">
-                          <span>Processing...</span>
-                          <span>{Math.round(loadingProgress)}%</span>
-                        </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold">AI Virtual Try-On in Progress</h3>
+                    <p className="text-purple-600 font-medium">{loadingMessage}</p>
+                    
+                    <div className="space-y-2">
+                      <Progress value={loadingProgress} className="w-full h-2" />
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>Processing...</span>
+                        <span>{Math.round(loadingProgress)}%</span>
                       </div>
-                      
-                      <div className="text-sm text-gray-500 space-y-1">
-                        <p>⏱️ Estimated time: 30-60 seconds</p>
-                        <p>🤖 AI is analyzing images and generating your virtual try-on</p>
-                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-gray-500 space-y-1">
+                      <p>⏱️ Estimated time: 30-60 seconds</p>
+                      <p>🤖 AI is analyzing images and generating your virtual try-on</p>
                     </div>
                   </div>
                 </div>
               )}
 
               {result?.success && result.image && (
-                <div className="space-y-4">
+                <div className="w-full space-y-4">
                   <div className="relative">
                     <img
                       src={result.image}
                       alt="Virtual try-on result"
-                      className="w-full rounded-lg shadow-lg"
+                      className="max-w-full max-h-[60vh] w-auto h-auto rounded-lg shadow-lg mx-auto object-contain"
                     />
                     <Badge className="absolute top-2 right-2 bg-green-500">
                       <CheckCircle className="h-3 w-3 mr-1" />
@@ -681,11 +679,12 @@ export function VirtualTryOn() {
               )}
 
               {!isLoading && !result && (
-                <div className="flex items-center justify-center h-64 text-center">
-                  <div>
-                    <Sparkles className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Upload images and click "Try On Virtually" to see the magic!</p>
-                  </div>
+                <div className="text-center">
+                  <Sparkles className="h-20 w-20 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">Ready to Try On</h3>
+                  <p className="text-gray-500 max-w-md mx-auto">
+                    Upload your images on the left and click "Try On Virtually" to see the AI magic!
+                  </p>
                 </div>
               )}
             </CardContent>
