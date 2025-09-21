@@ -1,0 +1,1006 @@
+"use client";
+
+import { useState } from "react";
+import { Sidebar } from "@/components/sidebar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { 
+  Camera,
+  Wand2,
+  Download,
+  Upload,
+  Loader2,
+  Sparkles,
+  Image as ImageIcon,
+  Settings,
+  Zap,
+  Star,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw
+} from "lucide-react";
+
+interface ImageModel {
+  id: string;
+  name: string;
+  provider: string;
+  description: string;
+  speed: "Ultra Fast" | "Fast" | "Standard" | "Pro";
+  resolution: string[];
+  features: string[];
+  category: "text-to-image" | "image-to-image" | "image-editing" | "style-transfer";
+}
+
+interface GenerationResult {
+  success: boolean;
+  imageUrl?: string;
+  taskId?: string;
+  error?: string;
+  metadata?: {
+    model: string;
+    prompt: string;
+    resolution: string;
+    seed?: number;
+  };
+}
+
+const imageModels: ImageModel[] = [
+  // Google Models
+  {
+    id: "google-imagen4",
+    name: "Google Imagen4",
+    provider: "Google",
+    description: "Latest Google image generation model with exceptional quality",
+    speed: "Standard",
+    resolution: ["1024x1024", "1024x768", "768x1024"],
+    features: ["High Quality", "Photorealistic", "Text Understanding"],
+    category: "text-to-image"
+  },
+  {
+    id: "google-imagen4-fast",
+    name: "Google Imagen4 Fast",
+    provider: "Google",
+    description: "Fast version of Imagen4 for quick generation",
+    speed: "Fast",
+    resolution: ["1024x1024", "512x512"],
+    features: ["Fast Generation", "Good Quality"],
+    category: "text-to-image"
+  },
+  {
+    id: "google-imagen4-ultra",
+    name: "Google Imagen4 Ultra",
+    provider: "Google", 
+    description: "Ultra high quality version of Imagen4",
+    speed: "Pro",
+    resolution: ["2048x2048", "1024x1024"],
+    features: ["Ultra Quality", "High Resolution", "Professional"],
+    category: "text-to-image"
+  },
+  {
+    id: "google-imagen3",
+    name: "Google Imagen3",
+    provider: "Google",
+    description: "Previous generation Google model with proven reliability",
+    speed: "Standard",
+    resolution: ["1024x1024", "768x768"],
+    features: ["Reliable", "Good Quality"],
+    category: "text-to-image"
+  },
+  {
+    id: "google-imagen3-fast",
+    name: "Google Imagen3 Fast",
+    provider: "Google",
+    description: "Fast version of Imagen3",
+    speed: "Fast",
+    resolution: ["1024x1024", "512x512"],
+    features: ["Fast Generation"],
+    category: "text-to-image"
+  },
+  {
+    id: "google-nano-banana-text-to-image",
+    name: "Google Nano Banana",
+    provider: "Google",
+    description: "Specialized model for creative image generation",
+    speed: "Fast",
+    resolution: ["1024x1024", "512x512"],
+    features: ["Creative", "Artistic", "Unique Style"],
+    category: "text-to-image"
+  },
+  {
+    id: "google-nano-banana-edit",
+    name: "Google Nano Banana Edit",
+    provider: "Google",
+    description: "Image editing capabilities with Nano Banana",
+    speed: "Fast",
+    resolution: ["1024x1024"],
+    features: ["Image Editing", "Style Transfer"],
+    category: "image-editing"
+  },
+  {
+    id: "google-nano-banana-effects",
+    name: "Google Nano Banana Effects",
+    provider: "Google",
+    description: "Special effects and transformations",
+    speed: "Fast",
+    resolution: ["1024x1024"],
+    features: ["Special Effects", "Transformations"],
+    category: "image-editing"
+  },
+  
+  // FLUX Models
+  {
+    id: "flux-1.1-pro",
+    name: "FLUX 1.1 Pro",
+    provider: "WaveSpeed AI",
+    description: "Professional grade FLUX model with 12B parameters",
+    speed: "Standard",
+    resolution: ["1024x1024", "1024x768", "768x1024"],
+    features: ["Professional", "12B Parameters", "High Quality"],
+    category: "text-to-image"
+  },
+  {
+    id: "flux-1.1-pro-ultra",
+    name: "FLUX 1.1 Pro Ultra",
+    provider: "WaveSpeed AI",
+    description: "Ultra high quality FLUX model",
+    speed: "Pro",
+    resolution: ["2048x2048", "1024x1024"],
+    features: ["Ultra Quality", "Professional", "High Resolution"],
+    category: "text-to-image"
+  },
+  {
+    id: "flux-dev",
+    name: "FLUX Dev",
+    provider: "WaveSpeed AI",
+    description: "Development version of FLUX with fast generation",
+    speed: "Fast",
+    resolution: ["1024x1024", "512x512"],
+    features: ["Fast Generation", "<2 seconds", "Development"],
+    category: "text-to-image"
+  },
+  {
+    id: "flux-dev-ultra-fast",
+    name: "FLUX Dev Ultra Fast",
+    provider: "WaveSpeed AI",
+    description: "Ultra fast FLUX generation in under 2 seconds",
+    speed: "Ultra Fast",
+    resolution: ["1024x1024", "512x512"],
+    features: ["<2 seconds", "Ultra Fast", "Good Quality"],
+    category: "text-to-image"
+  },
+  {
+    id: "flux-dev-lora",
+    name: "FLUX Dev LoRA",
+    provider: "WaveSpeed AI",
+    description: "FLUX with LoRA support for custom styles",
+    speed: "Fast",
+    resolution: ["1024x1024"],
+    features: ["LoRA Support", "Custom Styles", "Fine-tuning"],
+    category: "text-to-image"
+  },
+  {
+    id: "flux-dev-lora-ultra-fast",
+    name: "FLUX Dev LoRA Ultra Fast",
+    provider: "WaveSpeed AI",
+    description: "Ultra fast FLUX with LoRA support",
+    speed: "Ultra Fast",
+    resolution: ["1024x1024"],
+    features: ["LoRA", "Ultra Fast", "Custom Styles"],
+    category: "text-to-image"
+  },
+  {
+    id: "flux-schnell",
+    name: "FLUX Schnell",
+    provider: "WaveSpeed AI",
+    description: "Fastest FLUX model for rapid prototyping",
+    speed: "Ultra Fast",
+    resolution: ["1024x1024", "512x512"],
+    features: ["Fastest", "Prototyping", "Quick Results"],
+    category: "text-to-image"
+  },
+  {
+    id: "flux-schnell-lora",
+    name: "FLUX Schnell LoRA",
+    provider: "WaveSpeed AI",
+    description: "Fast FLUX with LoRA capabilities",
+    speed: "Ultra Fast",
+    resolution: ["1024x1024"],
+    features: ["Fast", "LoRA", "Custom Styles"],
+    category: "text-to-image"
+  },
+  {
+    id: "flux-fill-dev",
+    name: "FLUX Fill Dev",
+    provider: "WaveSpeed AI",
+    description: "FLUX model for image inpainting and filling",
+    speed: "Fast",
+    resolution: ["1024x1024"],
+    features: ["Inpainting", "Fill Missing Parts", "Editing"],
+    category: "image-editing"
+  },
+  {
+    id: "flux-redux-dev",
+    name: "FLUX Redux Dev",
+    provider: "WaveSpeed AI",
+    description: "Redux version of FLUX for enhanced control",
+    speed: "Fast",
+    resolution: ["1024x1024"],
+    features: ["Enhanced Control", "Redux Architecture"],
+    category: "text-to-image"
+  },
+  {
+    id: "flux-redux-pro",
+    name: "FLUX Redux Pro",
+    provider: "WaveSpeed AI",
+    description: "Professional Redux FLUX with advanced features",
+    speed: "Standard",
+    resolution: ["1024x1024", "1024x768"],
+    features: ["Professional", "Advanced Features"],
+    category: "text-to-image"
+  },
+
+  // ByteDance Models
+  {
+    id: "bytedance-dreamina-v3.0-text-to-image",
+    name: "ByteDance Dreamina V3.0",
+    provider: "ByteDance",
+    description: "Advanced text-to-image generation from ByteDance",
+    speed: "Standard",
+    resolution: ["1024x1024", "768x768"],
+    features: ["Advanced AI", "High Quality"],
+    category: "text-to-image"
+  },
+  {
+    id: "bytedance-dreamina-v3.1-text-to-image", 
+    name: "ByteDance Dreamina V3.1",
+    provider: "ByteDance",
+    description: "Latest Dreamina model with improved quality",
+    speed: "Standard",
+    resolution: ["1024x1024", "1024x768"],
+    features: ["Latest Version", "Improved Quality"],
+    category: "text-to-image"
+  },
+  {
+    id: "bytedance-seedream-v3",
+    name: "ByteDance Seedream V3",
+    provider: "ByteDance",
+    description: "Seedream model for creative generation",
+    speed: "Standard",
+    resolution: ["1024x1024"],
+    features: ["Creative", "Artistic"],
+    category: "text-to-image"
+  },
+  {
+    id: "bytedance-seedream-v3.1",
+    name: "ByteDance Seedream V3.1",
+    provider: "ByteDance",
+    description: "Enhanced Seedream with better quality",
+    speed: "Standard",
+    resolution: ["1024x1024"],
+    features: ["Enhanced", "Better Quality"],
+    category: "text-to-image"
+  },
+  {
+    id: "bytedance-seedream-v4",
+    name: "ByteDance Seedream V4",
+    provider: "ByteDance",
+    description: "Latest Seedream model with advanced features",
+    speed: "Standard",
+    resolution: ["1024x1024", "1024x768"],
+    features: ["Latest", "Advanced Features"],
+    category: "text-to-image"
+  },
+
+  // Stability AI Models
+  {
+    id: "stability-ai-stable-diffusion-3.5-large",
+    name: "Stable Diffusion 3.5 Large",
+    provider: "Stability AI",
+    description: "Large version of SD 3.5 with superior quality",
+    speed: "Standard",
+    resolution: ["1024x1024", "1024x768", "768x1024"],
+    features: ["Large Model", "Superior Quality"],
+    category: "text-to-image"
+  },
+  {
+    id: "stability-ai-stable-diffusion-3.5-large-turbo",
+    name: "Stable Diffusion 3.5 Large Turbo",
+    provider: "Stability AI",
+    description: "Turbo version for faster generation",
+    speed: "Fast",
+    resolution: ["1024x1024"],
+    features: ["Turbo Speed", "Fast Generation"],
+    category: "text-to-image"
+  },
+  {
+    id: "stability-ai-stable-diffusion-3.5-medium",
+    name: "Stable Diffusion 3.5 Medium",
+    provider: "Stability AI",
+    description: "Medium size model balancing speed and quality",
+    speed: "Fast",
+    resolution: ["1024x1024", "512x512"],
+    features: ["Balanced", "Good Performance"],
+    category: "text-to-image"
+  },
+  {
+    id: "stability-ai-stable-diffusion-3",
+    name: "Stable Diffusion 3",
+    provider: "Stability AI",
+    description: "Previous generation with proven reliability",
+    speed: "Fast",
+    resolution: ["1024x1024", "512x512"],
+    features: ["Proven", "Reliable"],
+    category: "text-to-image"
+  },
+  {
+    id: "stability-ai-sdxl",
+    name: "SDXL",
+    provider: "Stability AI",
+    description: "Stable Diffusion XL for high resolution images",
+    speed: "Standard",
+    resolution: ["1024x1024", "1024x768"],
+    features: ["High Resolution", "XL Model"],
+    category: "text-to-image"
+  },
+  {
+    id: "stability-ai-sdxl-lora",
+    name: "SDXL LoRA",
+    provider: "Stability AI",
+    description: "SDXL with LoRA support for customization",
+    speed: "Standard",
+    resolution: ["1024x1024"],
+    features: ["LoRA Support", "Customizable"],
+    category: "text-to-image"
+  },
+
+  // OpenAI Models
+  {
+    id: "openai-dall-e-3",
+    name: "DALL-E 3",
+    provider: "OpenAI",
+    description: "OpenAI's latest image generation model",
+    speed: "Standard",
+    resolution: ["1024x1024", "1024x1792", "1792x1024"],
+    features: ["OpenAI", "High Quality", "Text Understanding"],
+    category: "text-to-image"
+  },
+  {
+    id: "openai-dall-e-2",
+    name: "DALL-E 2",
+    provider: "OpenAI",
+    description: "Previous generation DALL-E model",
+    speed: "Fast",
+    resolution: ["1024x1024", "512x512"],
+    features: ["OpenAI", "Reliable"],
+    category: "text-to-image"
+  },
+
+  // Additional WaveSpeed AI Models
+  {
+    id: "hunyuan-image-2.1",
+    name: "Hunyuan Image 2.1",
+    provider: "WaveSpeed AI",
+    description: "Advanced Chinese AI model for image generation",
+    speed: "Standard",
+    resolution: ["1024x1024"],
+    features: ["Chinese AI", "Advanced"],
+    category: "text-to-image"
+  },
+  {
+    id: "qwen-image-text-to-image",
+    name: "Qwen Image",
+    provider: "WaveSpeed AI",
+    description: "Qwen family image generation model",
+    speed: "Fast",
+    resolution: ["1024x1024"],
+    features: ["Qwen Family", "Fast"],
+    category: "text-to-image"
+  },
+  {
+    id: "prefect-pony-xl",
+    name: "Perfect Pony XL",
+    provider: "WaveSpeed AI",
+    description: "Specialized model for anime and artistic styles",
+    speed: "Standard",
+    resolution: ["1024x1024"],
+    features: ["Anime", "Artistic", "Specialized"],
+    category: "text-to-image"
+  }
+];
+
+export default function ImageGenerationPage() {
+  const [selectedModel, setSelectedModel] = useState<ImageModel>(imageModels[0]);
+  const [prompt, setPrompt] = useState("");
+  const [negativePrompt, setNegativePrompt] = useState("");
+  const [resolution, setResolution] = useState("1024x1024");
+  const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [numImages, setNumImages] = useState(1);
+  const [seed, setSeed] = useState<number | undefined>(undefined);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [result, setResult] = useState<GenerationResult | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedProvider, setSelectedProvider] = useState<string>("all");
+
+  const categories = [
+    { id: "all", name: "All Categories" },
+    { id: "text-to-image", name: "Text to Image" },
+    { id: "image-to-image", name: "Image to Image" },
+    { id: "image-editing", name: "Image Editing" },
+    { id: "style-transfer", name: "Style Transfer" }
+  ];
+
+  const providers = [
+    { id: "all", name: "All Providers" },
+    { id: "Google", name: "Google" },
+    { id: "WaveSpeed AI", name: "WaveSpeed AI" },
+    { id: "ByteDance", name: "ByteDance" },
+    { id: "Stability AI", name: "Stability AI" },
+    { id: "OpenAI", name: "OpenAI" }
+  ];
+
+  const filteredModels = imageModels.filter(model => {
+    const categoryMatch = selectedCategory === "all" || model.category === selectedCategory;
+    const providerMatch = selectedProvider === "all" || model.provider === selectedProvider;
+    return categoryMatch && providerMatch;
+  });
+
+  // Helper functions to determine available parameters for each model
+  const supportsAspectRatio = (model: ImageModel) => {
+    return model.id.startsWith('google-imagen4') || model.id.startsWith('google-imagen3');
+  };
+
+  const supportsResolution = (model: ImageModel) => {
+    return model.id.startsWith('google-imagen4') || model.id.startsWith('google-imagen3');
+  };
+
+  const supportsNumImages = (model: ImageModel) => {
+    return model.id.startsWith('google-imagen4') || model.id.startsWith('google-imagen3');
+  };
+
+  const supportsNegativePrompt = (model: ImageModel) => {
+    return model.id.startsWith('google-imagen4') || model.id.startsWith('google-imagen3') || 
+           model.provider === "WaveSpeed AI" || model.provider === "Stability AI";
+  };
+
+  const supportsSeed = (model: ImageModel) => {
+    return !model.id.includes('nano-banana-edit') && !model.id.includes('nano-banana-effects');
+  };
+
+  const getAvailableAspectRatios = (model: ImageModel) => {
+    if (model.id.startsWith('google-imagen4') || model.id.startsWith('google-imagen3')) {
+      return ["1:1", "16:9", "9:16", "4:3", "3:4"];
+    }
+    return ["1:1"];
+  };
+
+  const getAvailableResolutions = (model: ImageModel) => {
+    if (model.id.startsWith('google-imagen4') || model.id.startsWith('google-imagen3')) {
+      return ["1k", "2k"];
+    }
+    return model.resolution || ["1024x1024"];
+  };
+
+  const pollForResult = async (taskId: string): Promise<void> => {
+    let attempts = 0;
+    const maxAttempts = 60; // Maximum 2 minutes of polling
+    
+    while (attempts < maxAttempts) {
+      try {
+        const response = await fetch('/api/nanobanana', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ taskId })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Polling failed: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success && result.imageUrl) {
+          // Image is ready
+          setResult({
+            success: true,
+            imageUrl: result.imageUrl,
+            taskId: taskId,
+            metadata: {
+              model: selectedModel.name,
+              prompt,
+              resolution,
+              seed
+            }
+          });
+          setIsGenerating(false);
+          return;
+        } else if (result.data?.data?.status === 'failed') {
+          // Task failed
+          setResult({
+            success: false,
+            error: result.data?.data?.error || "Image generation failed",
+            taskId: taskId
+          });
+          setIsGenerating(false);
+          return;
+        }
+        
+        // Still processing, wait and retry
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+        attempts++;
+        
+      } catch (error) {
+        console.error('Polling error:', error);
+        setResult({
+          success: false,
+          error: `Polling failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+          taskId: taskId
+        });
+        setIsGenerating(false);
+        return;
+      }
+    }
+    
+    // Timeout reached
+    setResult({
+      success: false,
+      error: "Image generation timed out. Please try again.",
+      taskId: taskId
+    });
+    setIsGenerating(false);
+  };
+
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      setResult({
+        success: false,
+        error: "Please enter a prompt"
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    setResult(null);
+
+    try {
+      // Make initial request to WaveSpeedAI
+      const response = await fetch('/api/wavespeed-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: selectedModel.id,
+          prompt,
+          negative_prompt: supportsNegativePrompt(selectedModel) ? negativePrompt : undefined,
+          resolution: supportsResolution(selectedModel) ? resolution : undefined,
+          aspect_ratio: supportsAspectRatio(selectedModel) ? aspectRatio : undefined,
+          num_images: supportsNumImages(selectedModel) ? numImages : undefined,
+          seed: supportsSeed(selectedModel) ? seed : undefined
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.imageUrl) {
+        // Image is ready immediately
+        setResult(data);
+        setIsGenerating(false);
+      } else if (data.success && data.taskId) {
+        // Start polling for results
+        console.log('Starting polling for task:', data.taskId);
+        await pollForResult(data.taskId);
+      } else {
+        // Error occurred
+        setResult(data);
+        setIsGenerating(false);
+      }
+
+    } catch (error) {
+      console.error('Image generation error:', error);
+      setResult({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+        metadata: {
+          model: selectedModel.name,
+          prompt,
+          resolution,
+          seed
+        }
+      });
+      setIsGenerating(false);
+    }
+  };
+
+  const downloadImage = () => {
+    if (!result?.imageUrl) return;
+
+    const link = document.createElement('a');
+    link.href = result.imageUrl;
+    link.download = `${selectedModel.name.replace(/\s+/g, '-')}-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getSpeedColor = (speed: string) => {
+    switch (speed) {
+      case "Ultra Fast": return "bg-green-100 text-green-800";
+      case "Fast": return "bg-blue-100 text-blue-800";
+      case "Standard": return "bg-yellow-100 text-yellow-800";
+      case "Pro": return "bg-purple-100 text-purple-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-background">
+      <Sidebar />
+      <main className="flex-1 ml-64 overflow-hidden">
+        <div className="h-full bg-gradient-to-br from-blue-50 via-white to-purple-50">
+          <div className="p-6 space-y-6">
+            {/* Header */}
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-3">
+                <Camera className="h-10 w-10 text-blue-600" />
+                AI Image Generation Studio
+              </h1>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Create stunning images with cutting-edge AI models from Google, ByteDance, Stability AI, and more. 
+                Generate images in under 2 seconds with our ultra-fast models.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              {/* Model Selection */}
+              <div className="xl:col-span-1 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="h-5 w-5" />
+                      Model & Settings
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Filters */}
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label>Category</Label>
+                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map(category => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Provider</Label>
+                        <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {providers.map(provider => (
+                              <SelectItem key={provider.id} value={provider.id}>
+                                {provider.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* Model Selection */}
+                    <div className="space-y-2">
+                      <Label>AI Model ({filteredModels.length} available)</Label>
+                      <ScrollArea className="h-64 border rounded-md p-2">
+                        <div className="space-y-2">
+                          {filteredModels.map(model => (
+                            <div
+                              key={model.id}
+                              onClick={() => setSelectedModel(model)}
+                              className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                selectedModel.id === model.id 
+                                  ? 'border-blue-500 bg-blue-50' 
+                                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="font-medium text-sm">{model.name}</h4>
+                                <Badge className={getSpeedColor(model.speed)}>
+                                  {model.speed}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-gray-600 mb-2">{model.description}</p>
+                              <div className="flex flex-wrap gap-1">
+                                {model.features.slice(0, 2).map(feature => (
+                                  <Badge key={feature} variant="outline" className="text-xs">
+                                    {feature}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
+
+                    {/* Selected Model Info */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium mb-2">{selectedModel.name}</h4>
+                      <p className="text-sm text-gray-600 mb-2">{selectedModel.description}</p>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge className={getSpeedColor(selectedModel.speed)}>
+                          {selectedModel.speed}
+                        </Badge>
+                        <Badge variant="outline">{selectedModel.provider}</Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedModel.features.map(feature => (
+                          <Badge key={feature} variant="secondary" className="text-xs">
+                            {feature}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Generation Settings */}
+                    <div className="space-y-3">
+                      {/* Aspect Ratio - Google models */}
+                      {supportsAspectRatio(selectedModel) && (
+                        <div className="space-y-2">
+                          <Label>Aspect Ratio</Label>
+                          <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getAvailableAspectRatios(selectedModel).map(ratio => (
+                                <SelectItem key={ratio} value={ratio}>
+                                  {ratio}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* Resolution - Model specific */}
+                      {supportsResolution(selectedModel) ? (
+                        <div className="space-y-2">
+                          <Label>Resolution</Label>
+                          <Select value={resolution} onValueChange={setResolution}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {getAvailableResolutions(selectedModel).map(res => (
+                                <SelectItem key={res} value={res}>
+                                  {res} {res === "1k" ? "(1024x1024)" : res === "2k" ? "(2048x2048)" : ""}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label>Resolution</Label>
+                          <Select value={resolution} onValueChange={setResolution}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {selectedModel.resolution.map(res => (
+                                <SelectItem key={res} value={res}>
+                                  {res}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* Number of Images - Google models */}
+                      {supportsNumImages(selectedModel) && (
+                        <div className="space-y-2">
+                          <Label>Number of Images</Label>
+                          <Select value={numImages.toString()} onValueChange={(value) => setNumImages(parseInt(value))}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[1, 2, 3, 4].map(num => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num} image{num > 1 ? 's' : ''}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* Seed - Most models */}
+                      {supportsSeed(selectedModel) && (
+                        <div className="space-y-2">
+                          <Label>Seed (Optional)</Label>
+                          <Input
+                            type="number"
+                            placeholder="Random if empty"
+                            value={seed || ""}
+                            onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : undefined)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Generation Interface */}
+              <div className="xl:col-span-2 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Wand2 className="h-5 w-5" />
+                      Image Generation
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Prompt</Label>
+                      <Textarea
+                        placeholder="Describe the image you want to generate..."
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+
+                    {/* Negative Prompt - Only for supported models */}
+                    {supportsNegativePrompt(selectedModel) && (
+                      <div className="space-y-2">
+                        <Label>Negative Prompt (Optional)</Label>
+                        <Textarea
+                          placeholder="What to avoid in the image..."
+                          value={negativePrompt}
+                          onChange={(e) => setNegativePrompt(e.target.value)}
+                          rows={2}
+                        />
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={handleGenerate}
+                      disabled={isGenerating || !prompt.trim()}
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate Image
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Results */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ImageIcon className="h-5 w-5" />
+                      Generated Image
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isGenerating && (
+                      <div className="flex items-center justify-center h-64">
+                        <div className="text-center space-y-4">
+                          <div className="relative">
+                            <Loader2 className="h-16 w-16 animate-spin text-blue-600 mx-auto" />
+                            <div className="absolute inset-0 rounded-full border-4 border-blue-200 animate-pulse"></div>
+                          </div>
+                          <div className="space-y-2">
+                            <h3 className="text-lg font-semibold">Generating with {selectedModel.name}</h3>
+                            <p className="text-blue-600 font-medium">
+                              {selectedModel.speed === "Ultra Fast" ? "⚡ Ultra Fast - Under 2 seconds" :
+                               selectedModel.speed === "Fast" ? "🚀 Fast - Under 10 seconds" :
+                               selectedModel.speed === "Standard" ? "⏱️ Standard - Under 30 seconds" :
+                               "🎯 Pro - High Quality Processing"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {result?.success && result.imageUrl && (
+                      <div className="space-y-4">
+                        <div className="relative">
+                          <img
+                            src={result.imageUrl}
+                            alt="Generated image"
+                            className="w-full rounded-lg shadow-lg"
+                          />
+                          <Badge className="absolute top-2 right-2 bg-green-500">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Success
+                          </Badge>
+                        </div>
+                        
+                        {result.metadata && (
+                          <div className="bg-gray-50 p-4 rounded-lg">
+                            <h4 className="font-semibold mb-2">Generation Details</h4>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div>Model: {result.metadata.model}</div>
+                              <div>Resolution: {result.metadata.resolution}</div>
+                              {result.metadata.seed && <div>Seed: {result.metadata.seed}</div>}
+                              <div className="col-span-2">Prompt: {result.metadata.prompt}</div>
+                            </div>
+                          </div>
+                        )}
+
+                        <Button
+                          onClick={downloadImage}
+                          className="w-full"
+                          variant="outline"
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download Image
+                        </Button>
+                      </div>
+                    )}
+
+                    {result?.error && (
+                      <Alert className="border-red-200 bg-red-50">
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                        <AlertDescription className="text-red-800">
+                          <strong>Error:</strong> {result.error}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {!isGenerating && !result && (
+                      <div className="flex items-center justify-center h-64 text-center">
+                        <div>
+                          <Camera className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                          <p className="text-gray-500">Enter a prompt and click "Generate Image" to create your AI masterpiece!</p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
