@@ -1,17 +1,15 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
-import { Playfair_Display } from "next/font/google";
+import { Josefin_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
-const playfair = Playfair_Display({
+const josefinSans = Josefin_Sans({
   subsets: ["latin"],
-  variable: "--font-playfair",
-  weight: ["400", "700"],
+  variable: "--font-josefin-sans",
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -29,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`font-sans ${GeistSans.variable} ${GeistMono.variable} ${playfair.variable}`}
+        className={`font-sans ${josefinSans.variable}`}
       >
         <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
         <Toaster />
