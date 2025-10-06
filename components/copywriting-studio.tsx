@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -106,8 +106,24 @@ export function CopywritingStudio() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<'generate' | 'history'>('generate');
   const [apiStatus, setApiStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const currentPlatform = PLATFORMS.find(p => p.id === selectedPlatform) || PLATFORMS[0];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Check API status on component mount
   useEffect(() => {
@@ -311,6 +327,48 @@ export function CopywritingStudio() {
                 Using Fallback
               </Badge>
             )}
+            {/* Dropdown Menu */}
+            <div className="relative" ref={dropdownRef}>
+              <button 
+                type="button"
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="text-gray-500 hover:text-gray-700 p-1 rounded-md hover:bg-gray-100 transition-colors"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                </svg>
+              </button>
+              
+              {showDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+                  <a
+                    href="/analytics"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <BarChart3 className="h-4 w-4 mr-3 text-gray-500" />
+                    Analytics
+                  </a>
+                  <a
+                    href="/trends"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <TrendingUp className="h-4 w-4 mr-3 text-gray-500" />
+                    Trends
+                  </a>
+                  <a
+                    href="/tools"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                  >
+                    <Settings className="h-4 w-4 mr-3 text-gray-500" />
+                    All Tools
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

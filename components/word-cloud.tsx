@@ -762,113 +762,117 @@ export function AnalyticsWordCloud() {
   const regionStats = getRegionStats();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-6 py-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Asian Markets Hashtag Analytics</h1>
-            <p className="text-gray-600 mt-1">
-              Comprehensive analysis of trending hashtags across Asian markets
-            </p>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-gray-500" />
-              <span className="text-sm text-gray-600">
-                {getCurrentSummary()?.total_hashtags_all_markets || 0} total hashtags
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-500" />
-              <span className="text-sm text-gray-600">
-                {getCurrentSummary()?.grand_total_unique_hashtags || 0} unique
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-6 space-y-8">
-        {/* Dataset Selection */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Select Dataset</h3>
-              <p className="text-sm text-gray-600">Choose which dataset to analyze for hashtag trends</p>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <Button
-                variant={activeDataset === "comprehensive" ? "default" : "outline"}
-                onClick={() => setActiveDataset("comprehensive")}
-                className="flex items-center gap-2"
-                size="lg"
-              >
-                <Globe className="h-5 w-5" />
-                <div className="text-left">
-                  <div className="font-semibold">Comprehensive Markets</div>
-                  <div className="text-xs opacity-80">
-                    {regionalData.generalSummary?.total_hashtags_all_markets || 0} hashtags • 
-                    {regionalData.generalSummary?.grand_total_unique_hashtags || 0} unique
-                  </div>
+    <div className="space-y-6">
+      {/* Dataset Selection Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Dataset Selection
+          </CardTitle>
+          <CardDescription>
+            Choose which dataset to analyze for hashtag trends
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <Button
+              variant={activeDataset === "comprehensive" ? "default" : "outline"}
+              onClick={() => setActiveDataset("comprehensive")}
+              className="flex items-center gap-2"
+              size="lg"
+            >
+              <Globe className="h-5 w-5" />
+              <div className="text-left">
+                <div className="font-semibold">Comprehensive Markets</div>
+                <div className="text-xs opacity-80">
+                  {regionalData.generalSummary?.total_hashtags_all_markets || 0} hashtags • 
+                  {regionalData.generalSummary?.grand_total_unique_hashtags || 0} unique
                 </div>
-              </Button>
-              
-              <Button
-                variant={activeDataset === "apparel" ? "default" : "outline"}
-                onClick={() => setActiveDataset("apparel")}
-                className="flex items-center gap-2"
-                size="lg"
-              >
-                <MessageCircle className="h-5 w-5" />
-                <div className="text-left">
-                  <div className="font-semibold">Apparel & Accessories</div>
-                  <div className="text-xs opacity-80">
-                    {regionalData.fashionSummary?.total_hashtags_all_markets || 0} hashtags • 
-                    {regionalData.fashionSummary?.grand_total_unique_hashtags || 0} unique
-                  </div>
-                </div>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-
-        {/* WordCloud Display */}
-        {!loading && (
-          <ReactWordCloudComponent
-            words={currentData}
-            title={activeDataset === "comprehensive" 
-              ? "Asian Markets - Hashtag WordCloud (All 480 Hashtags)" 
-              : "Apparel & Accessories - WordCloud (All 453 Unique Hashtags)"
-            }
-            totalHashtags={getCurrentSummary()?.total_hashtags_all_markets || 0}
-            uniqueHashtags={getCurrentSummary()?.grand_total_unique_hashtags || 0}
-          />
-        )}
-
-        {/* Loading State */}
-        {loading && (
-          <div className="bg-white rounded-xl shadow-sm border p-6">
-            <div className="flex items-center justify-center h-96">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading comprehensive hashtag data from Asian markets...</p>
               </div>
-            </div>
+            </Button>
+            
+            <Button
+              variant={activeDataset === "apparel" ? "default" : "outline"}
+              onClick={() => setActiveDataset("apparel")}
+              className="flex items-center gap-2"
+              size="lg"
+            >
+              <MessageCircle className="h-5 w-5" />
+              <div className="text-left">
+                <div className="font-semibold">Apparel & Accessories</div>
+                <div className="text-xs opacity-80">
+                  {regionalData.fashionSummary?.total_hashtags_all_markets || 0} hashtags • 
+                  {regionalData.fashionSummary?.grand_total_unique_hashtags || 0} unique
+                </div>
+              </div>
+            </Button>
           </div>
-        )}
+        </CardContent>
+      </Card>
 
-        {/* Hashtag Ranking Table */}
-        {!loading && (
-          <HashtagRankingTable 
-            data={currentData} 
-            keyCountries={keyCountries}
-          />
-        )}
-      </div>
+
+      {/* WordCloud Display Card */}
+      {!loading && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Hash className="h-5 w-5" />
+              Hashtag WordCloud
+            </CardTitle>
+            <CardDescription>
+              {activeDataset === "comprehensive" 
+                ? "Asian Markets - Hashtag WordCloud (All 480 Hashtags)" 
+                : "Apparel & Accessories - WordCloud (All 453 Unique Hashtags)"
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ReactWordCloudComponent
+              words={currentData}
+              title={activeDataset === "comprehensive" 
+                ? "Asian Markets - Hashtag WordCloud (All 480 Hashtags)" 
+                : "Apparel & Accessories - WordCloud (All 453 Unique Hashtags)"
+              }
+              totalHashtags={getCurrentSummary()?.total_hashtags_all_markets || 0}
+              uniqueHashtags={getCurrentSummary()?.grand_total_unique_hashtags || 0}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loading State Card */}
+      {loading && (
+        <Card>
+          <CardContent className="flex items-center justify-center h-96">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading comprehensive hashtag data from Asian markets...</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Hashtag Ranking Table Card */}
+      {!loading && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Hashtag Rankings
+            </CardTitle>
+            <CardDescription>
+              Top performing hashtags with detailed analytics and trends
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <HashtagRankingTable 
+              data={currentData} 
+              keyCountries={keyCountries}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
