@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { uploadVideoToS3, downloadFileFromUrl, generateFileName, isS3Configured } from '@/lib/s3-service';
+import { uploadVideoToS3, uploadImageToS3, downloadFileFromUrl, generateFileName, isS3Configured } from '@/lib/s3-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,6 +45,193 @@ export async function POST(request: NextRequest) {
 
     console.log('Making WaveSpeedAI video request with model:', model);
 
+    // Check if this is a self-hosted model that should use MCP
+    if (model === 'self-hosted-video') {
+      console.log('Using MCP server for self-hosted video generation...');
+      
+      try {
+        const mcpUrl = 'https://awshackathon.pagekite.me/mcp/call';
+        
+        // Determine which MCP tool to use based on whether we have an image
+        let mcpToolName: string;
+        let mcpArgs: any;
+        
+        if (imageFile) {
+          // Image-to-video using generate_video_wavespeed
+          console.log('Using MCP image-to-video (generate_video_wavespeed)');
+          
+          // Convert image file to base64
+          const imageBuffer = await imageFile.arrayBuffer();
+          const imageBase64 = Buffer.from(imageBuffer).toString('base64');
+          const imageMimeType = imageFile.type || 'image/jpeg';
+          
+          // First, upload image to S3 to get a public URL
+          let imageUrl: string;
+          
+          if (isS3Configured()) {
+            try {
+              console.log('Uploading image to S3 for MCP video generation...');
+              const imageFileName = generateFileName('image', 'temp-i2v');
+              const s3Result = await uploadImageToS3(Buffer.from(imageBuffer), imageFileName, {
+                purpose: 'temp-image-to-video',
+                timestamp: Date.now().toString()
+              });
+              
+              if (s3Result.success && s3Result.url) {
+                imageUrl = s3Result.url;
+                console.log('Image uploaded to S3:', imageUrl);
+              } else {
+                throw new Error('Failed to upload image to S3');
+              }
+            } catch (s3Error) {
+              console.error('S3 upload failed, falling back to base64:', s3Error);
+              // Fallback: Use text-to-video with descriptive prompt
+              mcpToolName = 'generate_video_text_to_video';
+              mcpArgs = {
+                prompt: prompt || 'Animate this scene with natural movement',
+                duration: parseInt(duration.replace('s', '')) || 5,
+                size: resolution.replace('x', '*'),
+                seed: seed ? parseInt(seed) : -1
+              };
+              imageUrl = ''; // Will skip image-to-video
+            }
+          } else {
+            console.log('S3 not configured, using text-to-video fallback');
+            mcpToolName = 'generate_video_text_to_video';
+            mcpArgs = {
+              prompt: prompt || 'Animate this scene with natural movement',
+              duration: parseInt(duration.replace('s', '')) || 5,
+              size: resolution.replace('x', '*'),
+              seed: seed ? parseInt(seed) : -1
+            };
+            imageUrl = '';
+          }
+          
+          // Use image-to-video if we have a URL
+          if (imageUrl) {
+            mcpToolName = 'generate_video_wavespeed';
+            mcpArgs = {
+              image_url: imageUrl,
+              prompt: prompt || 'Animate this image with natural movement',
+              duration: parseInt(duration.replace('s', '')) || 5,
+              seed: seed ? parseInt(seed) : -1,
+              last_image: ''
+            };
+          }
+        } else {
+          // Text-to-video using generate_video_text_to_video
+          console.log('Using MCP text-to-video (generate_video_text_to_video)');
+          
+          mcpToolName = 'generate_video_text_to_video';
+          mcpArgs = {
+            prompt: prompt,
+            duration: parseInt(duration.replace('s', '')) || 5,
+            size: resolution.replace('x', '*'),
+            seed: seed ? parseInt(seed) : -1
+          };
+        }
+        
+        // Call MCP server
+        const mcpResponse = await fetch(mcpUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            tool_name: mcpToolName,
+            arguments: mcpArgs
+          })
+        });
+        
+        if (!mcpResponse.ok) {
+          throw new Error(`MCP request failed: ${mcpResponse.status} ${mcpResponse.statusText}`);
+        }
+        
+        const mcpResult = await mcpResponse.json();
+        console.log('MCP Response:', JSON.stringify(mcpResult).substring(0, 200));
+        
+        // Parse the MCP response
+        if (mcpResult.success && mcpResult.data) {
+          const resultText = mcpResult.data;
+          
+          // Extract video URL from the response text
+          const urlMatch = resultText.match(/Video URL: (https?:\/\/[^\s]+)/);
+          if (urlMatch && urlMatch[1]) {
+            const videoUrl = urlMatch[1];
+            
+            // Optionally save to S3
+            let s3Url = null;
+            if (isS3Configured()) {
+              try {
+                const videoBuffer = await downloadFileFromUrl(videoUrl);
+                const fileName = generateFileName('video', 'self-hosted-mcp');
+                const s3Result = await uploadVideoToS3(videoBuffer, fileName, {
+                  prompt,
+                  model: 'self-hosted-mcp',
+                  resolution,
+                  duration
+                });
+                if (s3Result.success && s3Result.url) {
+                  s3Url = s3Result.url;
+                  console.log('Video saved to S3:', s3Url);
+                } else {
+                  console.error('S3 upload failed:', s3Result.error);
+                }
+              } catch (s3Error) {
+                console.error('Failed to save to S3:', s3Error);
+              }
+            }
+            
+            return NextResponse.json({
+              success: true,
+              videoUrl: s3Url || videoUrl,
+              taskId: `mcp_video_${Date.now()}`,
+              metadata: {
+                model: 'self-hosted-mcp',
+                prompt,
+                resolution,
+                duration,
+                seed: seed ? parseInt(seed) : undefined,
+                storedInS3: !!s3Url
+              }
+            });
+          } else {
+            // Check if it's still processing
+            const requestIdMatch = resultText.match(/Request ID: ([^\s]+)/);
+            if (requestIdMatch) {
+              return NextResponse.json({
+                success: true,
+                taskId: requestIdMatch[1],
+                message: 'Video generation in progress via MCP',
+                metadata: {
+                  model: 'self-hosted-mcp',
+                  prompt,
+                  resolution,
+                  duration
+                }
+              });
+            }
+            
+            throw new Error(`Could not extract video URL from MCP response: ${resultText}`);
+          }
+        } else if (mcpResult.error) {
+          throw new Error(`MCP error: ${mcpResult.error}`);
+        } else {
+          throw new Error(`Unexpected MCP response: ${JSON.stringify(mcpResult)}`);
+        }
+        
+      } catch (mcpError: any) {
+        console.error('MCP video generation error:', mcpError);
+        return NextResponse.json(
+          { 
+            error: 'MCP video generation failed',
+            details: mcpError.message
+          },
+          { status: 500 }
+        );
+      }
+    }
+    
     // For demo purposes, simulate API response if no API key is provided
     if (isDemo) {
       console.log('Demo mode: Simulating video generation...');

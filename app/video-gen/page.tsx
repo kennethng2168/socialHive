@@ -59,17 +59,30 @@ interface GenerationResult {
 }
 
 const videoModels: VideoModel[] = [
-  // Amazon Models
+  // Amazon Models - Text to Video
   {
     id: "amazon-nova-reel",
-    name: "Amazon Nova Reel",
+    name: "Amazon Nova Reel (Text-to-Video)",
     provider: "Amazon",
-    description: "Amazon's advanced video generation model with high quality output",
+    description: "Generate videos from 6s to 120s with Amazon's advanced AI model (Nova Reel 1.1)",
     speed: "Standard",
-    resolution: ["720p", "1080p"],
-    duration: ["6s", "10s"],
-    features: ["High Quality", "AWS Integration", "Natural Motion"],
+    resolution: ["720p"],
+    duration: ["6s", "12s", "18s", "24s", "30s", "36s", "42s", "48s", "54s", "60s", "66s", "72s", "78s", "84s", "90s", "96s", "102s", "108s", "114s", "120s"],
+    features: ["High Quality", "AWS Bedrock", "Natural Motion", "24 FPS", "Multi-shot"],
     category: "text-to-video"
+  },
+  
+  // Amazon Models - Image to Video
+  {
+    id: "amazon-nova-reel-i2v",
+    name: "Amazon Nova Reel (Image-to-Video)",
+    provider: "Amazon",
+    description: "Animate static images into 6-second videos with Amazon Nova Reel",
+    speed: "Standard",
+    resolution: ["720p"],
+    duration: ["6s"],
+    features: ["High Quality", "AWS Bedrock", "Smooth Animation", "24 FPS", "Single Shot"],
+    category: "image-to-video"
   },
   
   // Self-Hosted Model
@@ -90,8 +103,8 @@ export default function VideoGenerationPage() {
   const [selectedModel, setSelectedModel] = useState<VideoModel>(videoModels[0]);
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
-  const [resolution, setResolution] = useState("1280x720");
-  const [duration, setDuration] = useState("10s");
+  const [resolution, setResolution] = useState("720p");
+  const [duration, setDuration] = useState("6s");
   const [seed, setSeed] = useState<number | undefined>(undefined);
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<GenerationResult | null>(null);
@@ -191,6 +204,87 @@ export default function VideoGenerationPage() {
     setIsGenerating(false);
   };
 
+  // Poll for Nova Reel async job status
+  const pollForNovaReelStatus = async (jobId: string, invocationArn: string, estimatedTime: string): Promise<void> => {
+    const maxAttempts = 300; // 20 minutes (4s intervals for long videos)
+    let attempts = 0;
+    let lastElapsedTime = '';
+
+    while (attempts < maxAttempts) {
+      try {
+        const response = await fetch(`/api/nova-reel/status?invocationArn=${encodeURIComponent(invocationArn)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Status check failed: ${response.status}`);
+        }
+
+        const statusData = await response.json();
+        
+        // Update progress message
+        if (statusData.elapsedTime && statusData.elapsedTime !== lastElapsedTime) {
+          lastElapsedTime = statusData.elapsedTime;
+          console.log(`Job ${jobId} - Status: ${statusData.status}, Elapsed: ${statusData.elapsedTime}`);
+        }
+        
+        if (statusData.status === 'Completed' && statusData.videoUrl) {
+          // Video is ready
+          setResult({
+            success: true,
+            videoUrl: statusData.videoUrl,
+            taskId: jobId,
+            shots: statusData.shots,
+            totalShots: statusData.totalShots,
+            s3Location: statusData.s3Location,
+            metadata: {
+              model: selectedModel.name,
+              prompt,
+              resolution,
+              duration,
+              seed,
+              elapsedTime: statusData.elapsedTime,
+              totalShots: statusData.totalShots
+            }
+          });
+          setIsGenerating(false);
+          return;
+        } else if (statusData.status === 'Failed') {
+          // Task failed
+          setResult({
+            success: false,
+            error: statusData.failureMessage || statusData.message || "Video generation failed",
+            taskId: jobId
+          });
+          setIsGenerating(false);
+          return;
+        }
+        
+        // Still processing, wait and retry
+        // Use longer intervals for long videos
+        const interval = estimatedTime.includes('14-17') ? 10000 : 4000; // 10s for 120s videos, 4s otherwise
+        await new Promise(resolve => setTimeout(resolve, interval));
+        attempts++;
+        
+      } catch (error) {
+        console.error('Status polling error:', error);
+        setResult({
+          success: false,
+          error: `Status check failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+          taskId: jobId
+        });
+        setIsGenerating(false);
+        return;
+      }
+    }
+    
+    // Timeout reached
+    setResult({
+      success: false,
+      error: `Video generation timed out after ${lastElapsedTime}. Please check S3 bucket manually or try again.`,
+      taskId: jobId
+    });
+    setIsGenerating(false);
+  };
+
   const handleGenerate = async () => {
     if (!prompt.trim() && selectedModel.category === "text-to-video") {
       setResult({
@@ -214,11 +308,14 @@ export default function VideoGenerationPage() {
     try {
       let response;
       
-      // Route to Amazon Nova Reel API
-      if (selectedModel.id === "amazon-nova-reel") {
+      // Route to Amazon Nova Reel API (both text-to-video and image-to-video)
+      if (selectedModel.id === "amazon-nova-reel" || selectedModel.id === "amazon-nova-reel-i2v") {
         const formData = new FormData();
-        formData.append('prompt', prompt);
-        formData.append('resolution', resolution);
+        formData.append('prompt', prompt || 'Generate a video');
+        
+        // Convert resolution format (720p -> 1280x720, 1080p -> 1920x1080)
+        const apiResolution = resolution === "720p" ? "1280x720" : "1920x1080";
+        formData.append('resolution', apiResolution);
         formData.append('duration', duration);
         if (seed) formData.append('seed', seed.toString());
         if (imageFile) formData.append('image', imageFile);
@@ -252,11 +349,17 @@ export default function VideoGenerationPage() {
       const data = await response.json();
       
       if (data.success && data.videoUrl) {
-        // Video is ready immediately
+        // Video is ready immediately (6-second videos)
         setResult(data);
         setIsGenerating(false);
+      } else if (data.success && data.async && data.jobId && data.invocationArn) {
+        // Nova Reel async job - Start polling for status
+        console.log('Starting polling for Nova Reel async job:', data.jobId);
+        console.log('Invocation ARN:', data.invocationArn);
+        console.log('Estimated time:', data.estimatedTime);
+        await pollForNovaReelStatus(data.jobId, data.invocationArn, data.estimatedTime || '5-10 minutes');
       } else if (data.success && data.taskId) {
-        // Start polling for results
+        // WaveSpeedAI task - Start polling for results
         console.log('Starting polling for video task:', data.taskId);
         await pollForVideoResult(data.taskId);
       } else {

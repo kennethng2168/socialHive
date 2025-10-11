@@ -59,15 +59,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get API key from environment variables
-    const api_key = '';
-    if (!api_key) {
-      return NextResponse.json(
-        { error: 'API key not configured. Please set IDMVTON_API_KEY environment variable.' },
-        { status: 500 }
-      );
-    }
-
     // Prepare data for the API
     let processedHumanImg = human_img;
     let processedGarmImg = garm_img;
@@ -105,28 +96,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = {
-      crop,
-      seed: parseInt(seed.toString()),
-      steps: parseInt(steps.toString()),
-      category,
-      force_dc,
-      human_img: processedHumanImg,
-      garm_img: processedGarmImg,
-      mask_only,
-      garment_des: garment_des.trim()
-    };
-
-    // Validate category
-    const validCategories = ['upper_body', 'lower_body', 'dresses'];
-    if (!validCategories.includes(category)) {
-      return NextResponse.json(
-        { error: `Invalid category. Must be one of: ${validCategories.join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    // Validate steps and seed
+    // Validate steps
     if (steps < 1 || steps > 100) {
       return NextResponse.json(
         { error: 'Steps must be between 1 and 100' },
@@ -136,20 +106,149 @@ export async function POST(request: NextRequest) {
 
     console.log('Making virtual try-on request with category:', category);
 
-    // Make request to IDM-VTON API
-    const url = "https://api.segmind.com/v1/idm-vton-c2m8";
-    const response = await axios.post(url, data, {
+    // Ensure base64 strings don't have data URL prefixes
+    const cleanHumanBase64 = processedHumanImg.includes('base64,') 
+      ? processedHumanImg.split('base64,')[1] 
+      : processedHumanImg;
+    const cleanGarmentBase64 = processedGarmImg.includes('base64,') 
+      ? processedGarmImg.split('base64,')[1] 
+      : processedGarmImg;
+
+    // Validate base64 strings
+    if (!cleanHumanBase64 || cleanHumanBase64.length < 100) {
+      return NextResponse.json(
+        { error: 'Human image data is invalid or too small' },
+        { status: 400 }
+      );
+    }
+    
+    if (!cleanGarmentBase64 || cleanGarmentBase64.length < 100) {
+      return NextResponse.json(
+        { error: 'Garment image data is invalid or too small' },
+        { status: 400 }
+      );
+    }
+
+    // Check if base64 is valid
+    try {
+      Buffer.from(cleanHumanBase64, 'base64');
+      Buffer.from(cleanGarmentBase64, 'base64');
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Invalid base64 image data format' },
+        { status: 400 }
+      );
+    }
+
+    // Prepare request for the new MCP API
+    const apiUrl = "http://43.216.73.223:8000/mcp/call";
+    const requestData = {
+      tool_name: "virtual_tryon",
+      arguments: {
+        human_image_base64: cleanHumanBase64,
+        garment_image_base64: cleanGarmentBase64,
+        garment_description: garment_des.trim(),
+        denoise_steps: parseInt(steps.toString()),
+        seed: parseInt(seed.toString())
+      }
+    };
+
+    console.log('Sending request to MCP API...');
+    console.log('Request parameters:', {
+      tool_name: requestData.tool_name,
+      garment_description: requestData.arguments.garment_description,
+      denoise_steps: requestData.arguments.denoise_steps,
+      seed: requestData.arguments.seed,
+      human_image_length: cleanHumanBase64.length,
+      garment_image_length: cleanGarmentBase64.length
+    });
+    
+    // Make request to MCP Virtual Try-On API
+    const response = await axios.post(apiUrl, requestData, {
       headers: {
-        'x-api-key': api_key,
         'Content-Type': 'application/json'
       },
-      timeout: 60000, // 60 seconds timeout
-      responseType: 'arraybuffer'
+      timeout: 120000, // 120 seconds timeout for processing
+      responseType: 'json'
     });
 
-    // Convert response to base64
-    const base64Image = Buffer.from(response.data, 'binary').toString('base64');
-    const imageDataUrl = `data:image/png;base64,${base64Image}`;
+    console.log('Received response from MCP API');
+    console.log('Response data keys:', Object.keys(response.data));
+
+    // Check if the API returned an error
+    if (response.data.success === false || response.data.error) {
+      console.error('MCP API returned an error:', response.data.error);
+      const errorMessage = response.data.error || 'Unknown error from MCP API';
+      
+      // Provide more helpful error messages
+      let userFriendlyError = errorMessage;
+      if (errorMessage.includes('TaskGroup')) {
+        userFriendlyError = 'The virtual try-on service encountered an internal error. This might be due to image format/size issues or the service being temporarily unavailable. Please try with different images or try again later.';
+      }
+      
+      throw new Error(userFriendlyError);
+    }
+
+    // Parse the response
+    let imageDataUrl: string;
+    let base64Image: string;
+
+    // Log the response structure to help debug
+    if (response.data.content) {
+      console.log('Response has content property with type:', typeof response.data.content);
+    }
+
+    // The API might return the image in different formats
+    // Try multiple paths to find the image data
+    if (response.data.content) {
+      // MCP format with content array
+      if (Array.isArray(response.data.content)) {
+        const imageContent = response.data.content.find((item: any) => 
+          item.type === 'image' || item.type === 'resource'
+        );
+        if (imageContent && imageContent.data) {
+          base64Image = imageContent.data;
+        } else if (imageContent && imageContent.url) {
+          base64Image = imageContent.url;
+        } else {
+          console.error('No image found in content array:', JSON.stringify(response.data.content));
+          throw new Error('No image data in content array');
+        }
+      } else if (typeof response.data.content === 'string') {
+        base64Image = response.data.content;
+      } else if (response.data.content.data) {
+        base64Image = response.data.content.data;
+      } else if (response.data.content.image) {
+        base64Image = response.data.content.image;
+      } else {
+        console.error('Unknown content format:', JSON.stringify(response.data.content));
+        throw new Error('Unknown content format');
+      }
+    } else if (response.data.result) {
+      // If result contains base64 image
+      if (typeof response.data.result === 'string') {
+        base64Image = response.data.result;
+      } else if (response.data.result.image) {
+        base64Image = response.data.result.image;
+      } else if (response.data.result.data) {
+        base64Image = response.data.result.data;
+      } else {
+        console.error('Unknown result format:', JSON.stringify(response.data.result));
+        throw new Error('Invalid response format from API');
+      }
+    } else if (response.data.image) {
+      base64Image = response.data.image;
+    } else if (response.data.data) {
+      base64Image = response.data.data;
+    } else {
+      console.error('Full response data:', JSON.stringify(response.data, null, 2));
+      throw new Error('No image data in API response. Check server logs for details.');
+    }
+
+    // Ensure we have a valid data URL
+    imageDataUrl = base64Image.startsWith('data:') 
+      ? base64Image 
+      : `data:image/png;base64,${base64Image}`;
     
     let s3Url = null;
     let s3UploadError = null;
@@ -158,8 +257,12 @@ export async function POST(request: NextRequest) {
     if (isS3Configured()) {
       try {
         console.log('Uploading virtual try-on result to S3...');
-        const imageBuffer = Buffer.from(response.data, 'binary');
-        const fileName = generateFileName('virtual-tryon', 'idm-vton');
+        // Extract pure base64 if it has data URL prefix
+        const pureBase64 = base64Image.includes('base64,') 
+          ? base64Image.split('base64,')[1] 
+          : base64Image;
+        const imageBuffer = Buffer.from(pureBase64, 'base64');
+        const fileName = generateFileName('virtual-tryon', 'mcp-vton');
         
         const uploadResult = await uploadVirtualTryOnToS3(imageBuffer, fileName, {
           category,
@@ -205,10 +308,11 @@ export async function POST(request: NextRequest) {
 
     if (error.response) {
       // API returned an error response
+      const errorMessage = error.response.data?.error || error.response.data?.message || error.response.statusText;
       return NextResponse.json(
         { 
           error: 'Virtual try-on service error',
-          details: error.response.data?.message || error.response.statusText,
+          details: errorMessage,
           status: error.response.status
         },
         { status: error.response.status }
@@ -218,6 +322,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Request timeout. Virtual try-on is taking too long. Please try again.' },
         { status: 408 }
+      );
+    } else if (error.code === 'ECONNREFUSED') {
+      // Connection refused
+      return NextResponse.json(
+        { 
+          error: 'Unable to connect to virtual try-on service',
+          details: 'The API server might be down or unreachable'
+        },
+        { status: 503 }
       );
     } else {
       // Network or other error

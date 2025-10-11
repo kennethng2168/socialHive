@@ -133,7 +133,7 @@ export function CopywritingStudio() {
           method: 'GET',
         });
         const data = await response.json();
-        setApiStatus(data.geminiConnected ? 'connected' : 'disconnected');
+        setApiStatus(data.awsConfigured ? 'connected' : 'disconnected');
       } catch (error) {
         setApiStatus('disconnected');
       }
@@ -155,7 +155,7 @@ export function CopywritingStudio() {
     setIsGenerating(true);
 
     try {
-      // Call Gemini AI API for copywriting
+      // Call Amazon Nova Pro AI API for copywriting
       const response = await fetch('/api/copywriting-ai', {
         method: 'POST',
         headers: {
@@ -318,7 +318,7 @@ export function CopywritingStudio() {
             {apiStatus === 'connected' && (
               <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                 <CheckCircle className="h-3 w-3 mr-1" />
-                Gemini Connected
+                Nova Pro Connected
               </Badge>
             )}
             {apiStatus === 'disconnected' && (
@@ -500,13 +500,6 @@ export function CopywritingStudio() {
                       />
                     </div>
 
-                    {apiStatus === 'disconnected' && (
-                      <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg mb-4">
-                        <p className="text-sm text-orange-800">
-                          <strong>API Not Configured:</strong> Add your GEMINI_API_KEY to .env.local file to unlock full AI capabilities. Currently using fallback generator.
-                        </p>
-                      </div>
-                    )}
 
                     <Button
                       onClick={handleGenerate}

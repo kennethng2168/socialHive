@@ -558,15 +558,6 @@ export default function CopywritingPage() {
                   />
                 </div>
 
-                {apiStatus === "disconnected" && (
-                  <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg mb-4">
-                    <p className="text-sm text-orange-800">
-                      <strong>API Not Configured:</strong> Add your
-                      GEMINI_API_KEY to .env.local file to unlock full AI
-                      capabilities. Currently using fallback generator.
-                    </p>
-                  </div>
-                )}
 
                 <Button
                   onClick={handleGenerate}
@@ -611,7 +602,7 @@ export default function CopywritingPage() {
                         className="bg-green-50 text-green-700 border-green-200"
                       >
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        Gemini Connected
+                        Nova Pro Connected
                       </Badge>
                     )}
                     {apiStatus === "disconnected" && (
@@ -626,30 +617,32 @@ export default function CopywritingPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-center items-center p-6">
+              <CardContent className="flex-1 flex flex-col p-6 overflow-hidden">
                 {isGenerating && (
-                  <div className="text-center space-y-4">
-                    <div className="relative">
-                      <Loader2 className="h-16 w-16 animate-spin text-purple-600 mx-auto" />
-                      <div className="absolute inset-0 rounded-full border-4 border-purple-200 animate-pulse"></div>
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-semibold">
-                        Generating {selectedTone.toLowerCase()} content for{" "}
-                        {currentPlatform.name}
-                      </h3>
-                      <p className="text-purple-600 font-medium">
-                        Creating engaging {selectedType.toLowerCase()}{" "}
-                        content...
-                      </p>
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center space-y-4">
+                      <div className="relative">
+                        <Loader2 className="h-16 w-16 animate-spin text-purple-600 mx-auto" />
+                        <div className="absolute inset-0 rounded-full border-4 border-purple-200 animate-pulse"></div>
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold">
+                          Generating {selectedTone.toLowerCase()} content for{" "}
+                          {currentPlatform.name}
+                        </h3>
+                        <p className="text-purple-600 font-medium">
+                          Creating engaging {selectedType.toLowerCase()}{" "}
+                          content...
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {generatedCopies.length > 0 && !isGenerating && (
-                  <div className="w-full space-y-4">
-                    <ScrollArea className="h-[60vh] w-full">
-                      <div className="space-y-4">
+                  <div className="flex-1 flex flex-col min-h-0">
+                    <ScrollArea className="flex-1 w-full pr-4">
+                      <div className="space-y-4 pb-4">
                         {generatedCopies.map((copy) => {
                           const platform = PLATFORMS.find(
                             (p) => p.id === copy.platform
@@ -744,15 +737,17 @@ export default function CopywritingPage() {
                 )}
 
                 {!isGenerating && generatedCopies.length === 0 && (
-                  <div className="text-center">
-                    <MessageCircle className="h-20 w-20 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                      Ready to Create
-                    </h3>
-                    <p className="text-gray-500 max-w-md mx-auto">
-                      Configure your settings on the left and click 'Generate
-                      Copy' to create your AI-powered content!
-                    </p>
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                      <MessageCircle className="h-20 w-20 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                        Ready to Create
+                      </h3>
+                      <p className="text-gray-500 max-w-md mx-auto">
+                        Configure your settings on the left and click 'Generate
+                        Copy' to create your AI-powered content!
+                      </p>
+                    </div>
                   </div>
                 )}
               </CardContent>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 
 interface CopywritingRequest {
   prompt: string;
@@ -22,16 +23,19 @@ export async function POST(request: NextRequest) {
       maxLength 
     }: CopywritingRequest = await request.json();
 
-    // Get Gemini API key from environment
-    const apiKey = '';
+    // Get AWS credentials from environment
+    const awsAccessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    const awsSecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+    const region = process.env.AWS_REGION || 'us-east-1';
     
-    if (!apiKey) {
+    if (!awsAccessKeyId || !awsSecretAccessKey) {
       return NextResponse.json(
         { 
-          error: 'Gemini API key not configured',
+          error: 'AWS credentials not configured',
           content: generateFallbackCopy(prompt, platform, tone, contentType, targetAudience, keywords, maxLength),
           hashtags: generateHashtags(keywords, prompt),
-          engagement_score: Math.random() * 2 + 8
+          engagement_score: Math.random() * 2 + 8,
+          source: 'fallback'
         },
         { status: 200 }
       );
@@ -42,72 +46,57 @@ export async function POST(request: NextRequest) {
       prompt, platform, tone, contentType, targetAudience, keywords, maxLength
     );
 
-    // Call Google Gemini API
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
+    // Initialize Amazon Nova Pro client
+    const novaClient = new BedrockRuntimeClient({
+      region,
+      credentials: {
+        accessKeyId: awsAccessKeyId,
+        secretAccessKey: awsSecretAccessKey,
+      }
+    });
+
+    console.log('Calling Amazon Nova Pro for copywriting generation...');
+
+    // Call Amazon Nova Pro via Converse API
+    const command = new ConverseCommand({
+      modelId: 'amazon.nova-pro-v1:0',
+      messages: [
+        {
+          role: 'user',
+          content: [
             {
-              parts: [
-                {
-                  text: copywritingPrompt
-                }
-              ]
-            }
-          ],
-          generationConfig: {
-            temperature: 0.8, // Higher creativity for copywriting
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          },
-          safetySettings: [
-            {
-              category: "HARM_CATEGORY_HARASSMENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_HATE_SPEECH",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
-            },
-            {
-              category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-              threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              text: copywritingPrompt
             }
           ]
-        })
+        }
+      ],
+      inferenceConfig: {
+        temperature: 0.8, // Higher creativity for copywriting
+        topP: 0.95,
+        maxTokens: 1024,
       }
-    );
+    });
 
-    if (!geminiResponse.ok) {
-      const errorData = await geminiResponse.text();
-      console.error('Gemini API Error:', errorData);
-      
+    const novaResponse = await novaClient.send(command);
+    
+    // Extract response text from Nova's response structure
+    const responseText = novaResponse.output?.message?.content?.[0]?.text || '';
+    
+    if (!responseText) {
+      console.error('Nova Pro returned empty response');
       return NextResponse.json({
         content: generateFallbackCopy(prompt, platform, tone, contentType, targetAudience, keywords, maxLength),
         hashtags: generateHashtags(keywords, prompt),
         engagement_score: Math.random() * 2 + 8,
         source: 'fallback',
-        error: `Gemini API error: ${geminiResponse.status}`
+        error: 'Empty response from Nova Pro'
       });
     }
-
-    const data = await geminiResponse.json();
     
-    // Extract response text from Gemini's response structure
-    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('Nova Pro response received successfully');
     
     // Parse the structured response
-    const parsedResponse = parseGeminiCopyResponse(responseText);
+    const parsedResponse = parseNovaCopyResponse(responseText);
     
     // Ensure content fits platform limits
     if (parsedResponse.content.length > maxLength) {
@@ -118,9 +107,10 @@ export async function POST(request: NextRequest) {
       content: parsedResponse.content,
       hashtags: parsedResponse.hashtags || generateHashtags(keywords, prompt),
       engagement_score: parsedResponse.engagement_score || Math.random() * 2 + 8,
-      source: 'gemini',
+      source: 'amazon-nova-pro',
       platform: platform,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      model: 'amazon.nova-pro-v1:0'
     });
 
   } catch (error) {
@@ -191,36 +181,120 @@ Engagement Score: [Predicted score 1-10]
 Create content that will drive engagement and achieve marketing goals for this ${contentType} on ${platform}.`;
 }
 
-function parseGeminiCopyResponse(response: string): {
+function parseNovaCopyResponse(response: string): {
   content: string;
   hashtags?: string[];
   engagement_score?: number;
 } {
   try {
-    // Try to extract structured parts
-    const contentMatch = response.match(/Content:\s*(.*?)(?=\n(?:Hashtags|Engagement|$))/s);
-    const hashtagsMatch = response.match(/Hashtags:\s*(.*?)(?=\n(?:Engagement|$))/s);
-    const scoreMatch = response.match(/Engagement Score:\s*([\d.]+)/);
+    console.log('Raw Nova Pro response:', response.substring(0, 300));
+    
+    // Split into sections by markdown headers
+    const sections = response.split(/\*\*[A-Za-z\s]+:\*\*/);
+    
+    // Try to extract content between **Content:** and **Hashtags:**
+    // Allow for optional newlines after the header
+    const contentRegex = /\*\*Content:\*\*\s*\n?([\s\S]*?)(?=\n\s*\*\*Hashtags?:|\n\s*\*\*Engagement|$)/i;
+    const hashtagsRegex = /\*\*Hashtags?:\*\*\s*\n?([\s\S]*?)(?=\n\s*\*\*Engagement Score:|\n\s*\*\*Rationale|$)/i;
+    const scoreRegex = /\*\*Engagement Score:\*\*\s*(\d+(?:\.\d+)?)/i;
+    
+    const contentMatch = response.match(contentRegex);
+    const hashtagsMatch = response.match(hashtagsRegex);
+    const scoreMatch = response.match(scoreRegex);
+    
+    console.log('🔍 Regex matches:', {
+      hasContentMatch: !!contentMatch,
+      contentLength: contentMatch?.[1]?.length || 0,
+      hasHashtagsMatch: !!hashtagsMatch,
+      hasScoreMatch: !!scoreMatch
+    });
+    
+    // Extract and clean content
+    let content = '';
+    if (contentMatch && contentMatch[1]) {
+      content = contentMatch[1]
+        .trim()
+        .replace(/\n\s+/g, ' ') // Replace newlines with spaces
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+      console.log('✅ Extracted content via regex, length:', content.length);
+    } else {
+      console.log('⚠️  No content match found, trying fallback...');
+    }
+    
+    // If no content found, try fallback line-by-line parsing
+    if (!content || content.length < 10) {
+      const lines = response.split('\n');
+      let captureContent = false;
+      let contentLines: string[] = [];
+      
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        
+        if (/\*\*Content:\*\*/i.test(trimmedLine)) {
+          captureContent = true;
+          // Check if content starts on the same line
+          const sameLine = trimmedLine.replace(/\*\*Content:\*\*\s*/i, '');
+          if (sameLine) contentLines.push(sameLine);
+          continue;
+        }
+        
+        if (captureContent && /\*\*(?:Hashtags?|Engagement|Rationale):/i.test(trimmedLine)) {
+          break;
+        }
+        
+        if (captureContent && trimmedLine && !trimmedLine.startsWith('**')) {
+          contentLines.push(trimmedLine);
+        }
+      }
+      
+      content = contentLines.join(' ').replace(/\s+/g, ' ').trim();
+    }
+    
+    // Extract hashtags
+    let hashtags: string[] | undefined;
+    if (hashtagsMatch && hashtagsMatch[1]) {
+      const hashtagText = hashtagsMatch[1].trim();
+      // Extract hashtags from array format [#tag1, #tag2] or from inline text #tag1 #tag2
+      const arrayMatch = hashtagText.match(/\[(.*?)\]/);
+      if (arrayMatch) {
+        hashtags = arrayMatch[1]
+          .split(',')
+          .map(h => h.trim())
+          .filter(h => h)
+          .map(h => h.startsWith('#') ? h : '#' + h);
+      } else {
+        hashtags = hashtagText
+          .split(/[\s,]+/)
+          .map(h => h.trim())
+          .filter(h => h.startsWith('#'));
+      }
+    }
+    
+    // Also extract inline hashtags from content if no hashtags section found
+    if (!hashtags || hashtags.length === 0) {
+      const inlineHashtags = content.match(/#[\w]+/g);
+      if (inlineHashtags) {
+        hashtags = inlineHashtags.slice(0, 5);
+        // Remove hashtags from content
+        content = content.replace(/#[\w]+/g, '').replace(/\s+/g, ' ').trim();
+      }
+    }
+    
+    // Extract engagement score
+    const engagement_score = scoreMatch ? parseFloat(scoreMatch[1]) : undefined;
 
-    let content = contentMatch ? contentMatch[1].trim() : response.split('\n')[0] || response;
-    
-    // Clean up content
-    content = content.replace(/^["']|["']$/g, '').trim();
-    
-    const hashtags = hashtagsMatch 
-      ? hashtagsMatch[1].split(',').map(h => h.trim().replace(/[\[\]]/g, ''))
-      : undefined;
-    
-    const engagement_score = scoreMatch 
-      ? parseFloat(scoreMatch[1]) 
-      : undefined;
+    console.log('✅ Parsed content length:', content.length);
+    console.log('✅ Parsed hashtags:', hashtags);
+    console.log('✅ Parsed score:', engagement_score);
 
     return {
-      content,
+      content: content || response.trim(),
       hashtags,
       engagement_score
     };
   } catch (error) {
+    console.error('❌ Error parsing Nova response:', error);
     // Fallback to using the entire response as content
     return {
       content: response.trim()
@@ -306,17 +380,27 @@ function generateHashtags(keywords: string, prompt: string): string[] {
 
 // Health check endpoint
 export async function GET(request: NextRequest) {
+  const awsConfigured = !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+  
   return NextResponse.json({
     status: 'SocialHive Copywriting AI is ready',
+    model: 'Amazon Nova Pro v1.0',
     features: [
       'Multi-platform copywriting',
       'Tone customization',
       'Content type optimization',
       'Hashtag generation',
       'Engagement prediction',
-      'Character limit enforcement'
+      'Character limit enforcement',
+      'AWS Bedrock powered'
     ],
-    geminiConnected: false,
-    supportedPlatforms: ['Instagram', 'Twitter/X', 'Facebook', 'TikTok', 'YouTube', 'General']
+    awsConfigured: awsConfigured,
+    supportedPlatforms: ['Instagram', 'Twitter/X', 'Facebook', 'TikTok', 'YouTube', 'General'],
+    modelCapabilities: {
+      maxTokens: 1024,
+      temperature: 0.8,
+      provider: 'Amazon Bedrock',
+      modelId: 'amazon.nova-pro-v1:0'
+    }
   });
 }
