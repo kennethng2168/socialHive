@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
+
+// FastAPI MCP Server URL
+const FASTAPI_SERVER_URL = process.env.FASTAPI_SERVER_URL || 'https://awshackathon1.pagekite.me';
 
 interface CopywritingRequest {
   prompt: string;
@@ -23,80 +25,88 @@ export async function POST(request: NextRequest) {
       maxLength 
     }: CopywritingRequest = await request.json();
 
-    // Get AWS credentials from environment
-    const awsAccessKeyId = process.env.AWS_ACCESS_KEY_ID;
-    const awsSecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-    const region = process.env.AWS_REGION || 'us-east-1';
-    
-    if (!awsAccessKeyId || !awsSecretAccessKey) {
+    // Validate required fields
+    if (!prompt) {
       return NextResponse.json(
-        { 
-          error: 'AWS credentials not configured',
-          content: generateFallbackCopy(prompt, platform, tone, contentType, targetAudience, keywords, maxLength),
-          hashtags: generateHashtags(keywords, prompt),
-          engagement_score: Math.random() * 2 + 8,
-          source: 'fallback'
-        },
-        { status: 200 }
+        { error: 'Prompt is required' },
+        { status: 400 }
       );
     }
 
+    console.log('Calling Amazon Nova Pro for copywriting via FastAPI MCP Server...');
+    console.log('FastAPI URL:', FASTAPI_SERVER_URL);
+
     // Create specialized copywriting prompt
-    const copywritingPrompt = createCopywritingPrompt(
-      prompt, platform, tone, contentType, targetAudience, keywords, maxLength
-    );
+    const copywritingPrompt = `You are an expert social media copywriter. Create engaging ${platform} content based on these specifications:
 
-    // Initialize Amazon Nova Pro client
-    const novaClient = new BedrockRuntimeClient({
-      region,
-      credentials: {
-        accessKeyId: awsAccessKeyId,
-        secretAccessKey: awsSecretAccessKey,
-      }
-    });
+CONTENT BRIEF:
+- Topic/Product: ${prompt}
+- Platform: ${platform}
+- Tone: ${tone}
+- Content Type: ${contentType}
+- Target Audience: ${targetAudience || 'general audience'}
+- Keywords to include: ${keywords || 'none specified'}
+- Maximum length: ${maxLength} characters
 
-    console.log('Calling Amazon Nova Pro for copywriting generation...');
+REQUIREMENTS:
+1. Write compelling copy that matches the ${tone} tone
+2. Include relevant emojis where appropriate for ${platform}
+3. Add 3-5 relevant hashtags at the end
+4. Keep within ${maxLength} character limit
+5. Make it engaging for ${targetAudience || 'the target audience'}
+6. Include a clear call-to-action
+7. Use the specified keywords naturally: ${keywords}
 
-    // Call Amazon Nova Pro via Converse API
-    const command = new ConverseCommand({
-      modelId: 'amazon.nova-pro-v1:0',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              text: copywritingPrompt
-            }
-          ]
-        }
-      ],
-      inferenceConfig: {
+RESPONSE FORMAT:
+Content: [Your copy here]
+Hashtags: [#hashtag1, #hashtag2, #hashtag3]
+Engagement Score: [Predicted score 1-10]
+
+Create content that will drive engagement and achieve marketing goals for this ${contentType} on ${platform}.`;
+
+    // Call FastAPI server
+    const response = await fetch(`${FASTAPI_SERVER_URL}/nova/pro/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: copywritingPrompt,
         temperature: 0.8, // Higher creativity for copywriting
-        topP: 0.95,
-        maxTokens: 1024,
-      }
+        max_tokens: 1024,
+        top_p: 0.95
+      })
     });
 
-    const novaResponse = await novaClient.send(command);
-    
-    // Extract response text from Nova's response structure
-    const responseText = novaResponse.output?.message?.content?.[0]?.text || '';
-    
-    if (!responseText) {
-      console.error('Nova Pro returned empty response');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: response.statusText }));
+      console.error('FastAPI error:', errorData);
+      
+      // Return fallback copy
       return NextResponse.json({
         content: generateFallbackCopy(prompt, platform, tone, contentType, targetAudience, keywords, maxLength),
         hashtags: generateHashtags(keywords, prompt),
         engagement_score: Math.random() * 2 + 8,
         source: 'fallback',
-        error: 'Empty response from Nova Pro'
+        error: errorData.detail || errorData.error || 'FastAPI server error'
       });
     }
+
+    const data = await response.json();
     
-    console.log('Nova Pro response received successfully');
-    
+    if (!data.success || !data.generated_text) {
+      // Return fallback copy
+      return NextResponse.json({
+        content: generateFallbackCopy(prompt, platform, tone, contentType, targetAudience, keywords, maxLength),
+        hashtags: generateHashtags(keywords, prompt),
+        engagement_score: Math.random() * 2 + 8,
+        source: 'fallback',
+        error: 'No text generated'
+      });
+    }
+
     // Parse the structured response
-    const parsedResponse = parseNovaCopyResponse(responseText);
+    const parsedResponse = parseNovaCopyResponse(data.generated_text);
     
     // Ensure content fits platform limits
     if (parsedResponse.content.length > maxLength) {
@@ -135,52 +145,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function createCopywritingPrompt(
-  prompt: string, 
-  platform: string, 
-  tone: string, 
-  contentType: string, 
-  targetAudience: string, 
-  keywords: string, 
-  maxLength: number
-): string {
-  const platformSpecs = {
-    instagram: 'Instagram post with engaging visuals focus, use emojis strategically',
-    twitter: 'Twitter/X post, be concise and punchy, use relevant hashtags',
-    facebook: 'Facebook post, can be longer and more conversational',
-    tiktok: 'TikTok video caption, trendy and engaging, use viral language and hashtags',
-    youtube: 'YouTube description/comment, engaging and searchable',
-    general: 'General social media post, adaptable format'
-  };
-
-  return `You are an expert social media copywriter. Create engaging ${platform} content based on these specifications:
-
-CONTENT BRIEF:
-- Topic/Product: ${prompt}
-- Platform: ${platform} (${platformSpecs[platform as keyof typeof platformSpecs] || 'general social media'})
-- Tone: ${tone}
-- Content Type: ${contentType}
-- Target Audience: ${targetAudience || 'general audience'}
-- Keywords to include: ${keywords || 'none specified'}
-- Maximum length: ${maxLength} characters
-
-REQUIREMENTS:
-1. Write compelling copy that matches the ${tone} tone
-2. Include relevant emojis where appropriate for ${platform}
-3. Add 3-5 relevant hashtags at the end
-4. Keep within ${maxLength} character limit
-5. Make it engaging for ${targetAudience || 'the target audience'}
-6. Include a clear call-to-action
-7. Use the specified keywords naturally: ${keywords}
-
-RESPONSE FORMAT:
-Content: [Your copy here]
-Hashtags: [#hashtag1, #hashtag2, #hashtag3]
-Engagement Score: [Predicted score 1-10]
-
-Create content that will drive engagement and achieve marketing goals for this ${contentType} on ${platform}.`;
-}
-
 function parseNovaCopyResponse(response: string): {
   content: string;
   hashtags?: string[];
@@ -189,11 +153,7 @@ function parseNovaCopyResponse(response: string): {
   try {
     console.log('Raw Nova Pro response:', response.substring(0, 300));
     
-    // Split into sections by markdown headers
-    const sections = response.split(/\*\*[A-Za-z\s]+:\*\*/);
-    
     // Try to extract content between **Content:** and **Hashtags:**
-    // Allow for optional newlines after the header
     const contentRegex = /\*\*Content:\*\*\s*\n?([\s\S]*?)(?=\n\s*\*\*Hashtags?:|\n\s*\*\*Engagement|$)/i;
     const hashtagsRegex = /\*\*Hashtags?:\*\*\s*\n?([\s\S]*?)(?=\n\s*\*\*Engagement Score:|\n\s*\*\*Rationale|$)/i;
     const scoreRegex = /\*\*Engagement Score:\*\*\s*(\d+(?:\.\d+)?)/i;
@@ -202,27 +162,16 @@ function parseNovaCopyResponse(response: string): {
     const hashtagsMatch = response.match(hashtagsRegex);
     const scoreMatch = response.match(scoreRegex);
     
-    console.log('🔍 Regex matches:', {
-      hasContentMatch: !!contentMatch,
-      contentLength: contentMatch?.[1]?.length || 0,
-      hasHashtagsMatch: !!hashtagsMatch,
-      hasScoreMatch: !!scoreMatch
-    });
-    
-    // Extract and clean content
     let content = '';
     if (contentMatch && contentMatch[1]) {
       content = contentMatch[1]
         .trim()
-        .replace(/\n\s+/g, ' ') // Replace newlines with spaces
-        .replace(/\s+/g, ' ') // Normalize whitespace
+        .replace(/\n\s+/g, ' ')
+        .replace(/\s+/g, ' ')
         .trim();
-      console.log('✅ Extracted content via regex, length:', content.length);
-    } else {
-      console.log('⚠️  No content match found, trying fallback...');
     }
     
-    // If no content found, try fallback line-by-line parsing
+    // Fallback: line-by-line parsing
     if (!content || content.length < 10) {
       const lines = response.split('\n');
       let captureContent = false;
@@ -233,7 +182,6 @@ function parseNovaCopyResponse(response: string): {
         
         if (/\*\*Content:\*\*/i.test(trimmedLine)) {
           captureContent = true;
-          // Check if content starts on the same line
           const sameLine = trimmedLine.replace(/\*\*Content:\*\*\s*/i, '');
           if (sameLine) contentLines.push(sameLine);
           continue;
@@ -255,7 +203,6 @@ function parseNovaCopyResponse(response: string): {
     let hashtags: string[] | undefined;
     if (hashtagsMatch && hashtagsMatch[1]) {
       const hashtagText = hashtagsMatch[1].trim();
-      // Extract hashtags from array format [#tag1, #tag2] or from inline text #tag1 #tag2
       const arrayMatch = hashtagText.match(/\[(.*?)\]/);
       if (arrayMatch) {
         hashtags = arrayMatch[1]
@@ -271,17 +218,15 @@ function parseNovaCopyResponse(response: string): {
       }
     }
     
-    // Also extract inline hashtags from content if no hashtags section found
+    // Extract inline hashtags if no hashtags section found
     if (!hashtags || hashtags.length === 0) {
       const inlineHashtags = content.match(/#[\w]+/g);
       if (inlineHashtags) {
         hashtags = inlineHashtags.slice(0, 5);
-        // Remove hashtags from content
         content = content.replace(/#[\w]+/g, '').replace(/\s+/g, ' ').trim();
       }
     }
     
-    // Extract engagement score
     const engagement_score = scoreMatch ? parseFloat(scoreMatch[1]) : undefined;
 
     console.log('✅ Parsed content length:', content.length);
@@ -295,7 +240,6 @@ function parseNovaCopyResponse(response: string): {
     };
   } catch (error) {
     console.error('❌ Error parsing Nova response:', error);
-    // Fallback to using the entire response as content
     return {
       content: response.trim()
     };
@@ -311,7 +255,7 @@ function generateFallbackCopy(
   keywords: string, 
   maxLength: number
 ): string {
-  const toneStarters = {
+  const toneStarters: Record<string, string> = {
     'Professional': '📢 Introducing',
     'Casual': 'Hey there! 👋',
     'Friendly': 'We\'re excited to share',
@@ -324,7 +268,7 @@ function generateFallbackCopy(
     'Promotional': '🔥 Special offer:'
   };
 
-  const starter = toneStarters[tone as keyof typeof toneStarters] || '🌟 Discover';
+  const starter = toneStarters[tone] || '🌟 Discover';
   
   let copy = `${starter} ${prompt}`;
   
@@ -380,27 +324,41 @@ function generateHashtags(keywords: string, prompt: string): string[] {
 
 // Health check endpoint
 export async function GET(request: NextRequest) {
-  const awsConfigured = !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
-  
-  return NextResponse.json({
-    status: 'SocialHive Copywriting AI is ready',
-    model: 'Amazon Nova Pro v1.0',
-    features: [
-      'Multi-platform copywriting',
-      'Tone customization',
-      'Content type optimization',
-      'Hashtag generation',
-      'Engagement prediction',
-      'Character limit enforcement',
-      'AWS Bedrock powered'
-    ],
-    awsConfigured: awsConfigured,
-    supportedPlatforms: ['Instagram', 'Twitter/X', 'Facebook', 'TikTok', 'YouTube', 'General'],
-    modelCapabilities: {
-      maxTokens: 1024,
-      temperature: 0.8,
-      provider: 'Amazon Bedrock',
-      modelId: 'amazon.nova-pro-v1:0'
-    }
-  });
+  try {
+    const response = await fetch(`${FASTAPI_SERVER_URL}/nova/info`);
+    const data = await response.json();
+    
+    return NextResponse.json({
+      status: 'SocialHive Copywriting AI is ready',
+      model: 'Amazon Nova Pro v1.0',
+      provider: 'FastAPI MCP Server',
+      server_url: FASTAPI_SERVER_URL,
+      features: [
+        'Multi-platform copywriting',
+        'Tone customization',
+        'Content type optimization',
+        'Hashtag generation',
+        'Engagement prediction',
+        'Character limit enforcement',
+        'AWS Bedrock powered'
+      ],
+      awsConfigured: response.ok,
+      supportedPlatforms: ['Instagram', 'Twitter/X', 'Facebook', 'TikTok', 'YouTube', 'General'],
+      modelCapabilities: {
+        maxTokens: 1024,
+        temperature: 0.8,
+        provider: 'Amazon Bedrock',
+        modelId: 'amazon.nova-pro-v1:0'
+      }
+    });
+  } catch (error) {
+    return NextResponse.json({
+      status: 'SocialHive Copywriting AI is ready',
+      model: 'Amazon Nova Pro v1.0',
+      provider: 'FastAPI MCP Server',
+      server_url: FASTAPI_SERVER_URL,
+      awsConfigured: false,
+      error: 'Cannot connect to FastAPI server'
+    });
+  }
 }
