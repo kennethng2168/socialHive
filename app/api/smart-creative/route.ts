@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * The agent intelligently understands user intent and generates appropriate content.
  */
 
-const SMART_CREATIVE_API_URL = 'http://43.216.73.223';
+const SMART_CREATIVE_API_URL = process.env.SMART_CREATIVE_API_URL || 'http://43.216.73.223';
 
 export async function POST(request: NextRequest) {
   try {
