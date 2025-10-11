@@ -15,9 +15,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // AWS credentials should be configured directly in the code
-    // For now, we'll use a placeholder structure
-    const AWS_REGION = 'us-east-1';
+    // Configure region from environment or use default
+    const REGION = process.env.REGION || 'us-east-1';
     
     // Check if AWS credentials are configured
     // In production, use AWS SDK with proper credentials
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Real AWS Bedrock implementation
     // Configure AWS SDK v3 for Bedrock Runtime
     const bedrockConfig = {
-      region: AWS_REGION,
+      region: REGION,
       // Credentials will be loaded from environment or IAM role
     };
 
@@ -70,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     // Using fetch to call AWS Bedrock API
     // Note: In production, use AWS SDK instead
-    const bedrockEndpoint = `https://bedrock-runtime.${AWS_REGION}.amazonaws.com/model/amazon.nova-canvas-v1:0/invoke`;
+    const bedrockEndpoint = `https://bedrock-runtime.${REGION}.amazonaws.com/model/amazon.nova-canvas-v1:0/invoke`;
     
     console.log('Calling Amazon Nova Canvas API...');
     console.log('Request body:', JSON.stringify(requestBody, null, 2));

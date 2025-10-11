@@ -4,19 +4,19 @@ import { v4 as uuidv4 } from 'uuid';
 
 // S3 Client Configuration
 const s3Client = new S3Client({
-  region: 'us-east-1',
+  region: process.env.REGION || 'us-east-1',
   credentials: {
-    accessKeyId: '',
-    secretAccessKey: '',
+    accessKeyId: process.env.ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.SECRET_ACCESS_KEY || '',
   },
 });
 
 // S3 Bucket Configuration
 export const S3_BUCKETS = {
-  IMAGES: 'socialhive-generated-images',
-  VIDEOS: 'socialhive-generated-videos',
-  VIRTUAL_TRYON: 'socialhive-virtual-tryon',
-  MUSIC: 'socialhive-generated-music',
+  IMAGES: process.env.S3_BUCKET_IMAGES || 'socialhive-generated-images',
+  VIDEOS: process.env.S3_BUCKET_VIDEOS || 'socialhive-generated-videos',
+  VIRTUAL_TRYON: process.env.S3_BUCKET_VIRTUAL_TRYON || 'socialhive-virtual-tryon',
+  MUSIC: process.env.S3_BUCKET_MUSIC || 'socialhive-generated-music',
 } as const;
 
 // Content Type Configuration
@@ -90,7 +90,7 @@ export async function uploadToS3(
     await s3Client.send(command);
 
     // Generate public URL
-    const url = `https://${options.bucket}.s3.us-east-1.amazonaws.com/${uniqueKey}`;
+    const url = `https://${options.bucket}.s3.${process.env.REGION || 'us-east-1'}.amazonaws.com/${uniqueKey}`;
 
     return {
       success: true,
@@ -268,7 +268,11 @@ export function generateFileName(contentType: 'image' | 'video' | 'virtual-tryon
  * Check if S3 is properly configured
  */
 export function isS3Configured(): boolean {
-  return false;
+  return !!(
+    process.env.ACCESS_KEY_ID &&
+    process.env.SECRET_ACCESS_KEY &&
+    process.env.REGION
+  );
 }
 
 /**
@@ -277,8 +281,12 @@ export function isS3Configured(): boolean {
 export function getS3Status() {
   return {
     configured: isS3Configured(),
-    region: 'us-east-1',
+    region: process.env.REGION || 'us-east-1',
     buckets: S3_BUCKETS,
-    missingEnvVars: [],
+    missingEnvVars: [
+      !process.env.ACCESS_KEY_ID && 'ACCESS_KEY_ID',
+      !process.env.SECRET_ACCESS_KEY && 'SECRET_ACCESS_KEY',
+      !process.env.REGION && 'REGION',
+    ].filter(Boolean),
   };
 }

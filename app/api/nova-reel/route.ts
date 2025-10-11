@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // AWS credentials should be configured directly in the code
-    const AWS_REGION = 'us-east-1';
+    // Configure region from environment or use default
+    const REGION = process.env.REGION || 'us-east-1';
     
     // Check if AWS credentials are configured
     const isDemo = true; // Set to false when AWS is properly configured
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     // Real AWS Bedrock implementation
     const bedrockConfig = {
-      region: AWS_REGION,
+      region: REGION,
       // Credentials will be loaded from environment or IAM role
     };
 
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Using AWS Bedrock API
-    const bedrockEndpoint = `https://bedrock-runtime.${AWS_REGION}.amazonaws.com/model/amazon.nova-reel-v1:0/invoke`;
+    const bedrockEndpoint = `https://bedrock-runtime.${REGION}.amazonaws.com/model/amazon.nova-reel-v1:0/invoke`;
     
     console.log('Calling Amazon Nova Reel API...');
     console.log('Request configuration:', {

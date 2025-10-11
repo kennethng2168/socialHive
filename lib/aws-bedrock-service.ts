@@ -7,7 +7,10 @@
  * 
  * Setup Instructions:
  * 1. Install AWS SDK: npm install @aws-sdk/client-bedrock-runtime
- * 2. Configure AWS credentials directly in the code
+ * 2. Configure credentials via environment variables or IAM role:
+ *    - ACCESS_KEY_ID
+ *    - SECRET_ACCESS_KEY
+ *    - REGION (default: us-east-1)
  * 3. Ensure IAM permissions for bedrock:InvokeModel
  */
 
@@ -46,8 +49,8 @@ export function createBedrockClient() {
   const client = new BedrockRuntimeClient({
     region: 'us-east-1',
     credentials: {
-      accessKeyId: '',
-      secretAccessKey: '',
+      accessKeyId: process.env.ACCESS_KEY_ID || '',
+      secretAccessKey: process.env.SECRET_ACCESS_KEY || '',
     },
   });
   return client;
@@ -213,8 +216,8 @@ export async function generateWithNovaReel(
  * Check if AWS Bedrock is properly configured
  */
 export function isBedrockConfigured(): boolean {
-  // Check if AWS credentials are available
-  return false; // Update when credentials are configured
+  // Check if credentials are available
+  return !!(process.env.ACCESS_KEY_ID && process.env.SECRET_ACCESS_KEY);
 }
 
 /**
