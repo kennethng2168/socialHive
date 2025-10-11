@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const REGION = process.env.REGION || 'us-east-1';
     
     // Check if AWS credentials are configured
-    const isDemo = true; // Set to false when AWS is properly configured
+    const isDemo = false; // Set to false when AWS is properly configured
 
     if (isDemo) {
       console.log('Demo mode: Simulating Amazon Nova Reel generation...');

@@ -83,78 +83,6 @@ const videoModels: VideoModel[] = [
     duration: ["5s", "10s", "15s"],
     features: ["Full Control", "Privacy", "Custom Configuration"],
     category: "text-to-video"
-  },
-  
-  // Google Models - Working models from WaveSpeed AI
-  {
-    id: "google-veo3-fast-image-to-video",
-    name: "Google Veo3 Fast I2V",
-    provider: "Google",
-    description: "Fast image-to-video with Veo3 - 30% faster, 80% cost reduction",
-    speed: "Fast",
-    resolution: ["720p", "1080p"],
-    duration: ["8s"],
-    features: ["Fast Generation", "Cost Effective", "Audio Support"],
-    category: "image-to-video"
-  },
-  {
-    id: "google-veo3-image-to-video",
-    name: "Google Veo3 I2V",
-    provider: "Google",
-    description: "High-quality image-to-video conversion with Veo3",
-    speed: "Standard",
-    resolution: ["720p", "1080p"],
-    duration: ["8s"],
-    features: ["High Quality", "Image to Video", "Audio Support"],
-    category: "image-to-video"
-  },
-
-  // Kwaivgi (Kling) Models - Working models from WaveSpeed AI
-  {
-    id: "kwaivgi-kling-v2.1-i2v-pro",
-    name: "Kling V2.1 I2V Pro",
-    provider: "Kwaivgi",
-    description: "Professional image-to-video conversion with Kling V2.1",
-    speed: "Standard",
-    resolution: ["1920x1080"],
-    duration: ["5s", "10s", "15s"],
-    features: ["Pro Quality", "I2V", "Flexible Duration"],
-    category: "image-to-video"
-  },
-  {
-    id: "kwaivgi-kling-v2.1-i2v-standard",
-    name: "Kling V2.1 I2V Standard",
-    provider: "Kwaivgi",
-    description: "Standard image-to-video conversion with Kling V2.1",
-    speed: "Fast",
-    resolution: ["1280x720"],
-    duration: ["5s", "10s"],
-    features: ["Standard Quality", "Fast", "I2V"],
-    category: "image-to-video"
-  },
-  {
-    id: "kwaivgi-kling-v2.1-t2v-master",
-    name: "Kling V2.1 T2V Master",
-    provider: "Kwaivgi",
-    description: "Master version of Kling with superior text-to-video quality",
-    speed: "Pro",
-    resolution: ["1920x1080", "2560x1440"],
-    duration: ["10s", "20s", "30s"],
-    features: ["Master Quality", "Superior", "Latest Version"],
-    category: "text-to-video"
-  },
-
-  // Pixverse Models
-  {
-    id: "pixverse-pixverse-v5-t2v",
-    name: "Pixverse V5 T2V",
-    provider: "Pixverse",
-    description: "Advanced text-to-video generation with Pixverse V5",
-    speed: "Standard",
-    resolution: ["1280x720", "1920x1080"],
-    duration: ["5s", "10s", "20s"],
-    features: ["High Quality", "Advanced AI", "Creative"],
-    category: "text-to-video"
   }
 ];
 
@@ -182,15 +110,7 @@ export default function VideoGenerationPage() {
   const providers = [
     { id: "all", name: "All Providers" },
     { id: "Amazon", name: "Amazon" },
-    { id: "Self-Hosted", name: "Self-Hosted" },
-    { id: "Google", name: "Google" },
-    { id: "ByteDance", name: "ByteDance" },
-    { id: "Kwaivgi", name: "Kwaivgi (Kling)" },
-    { id: "Minimax", name: "Minimax" },
-    { id: "Pika", name: "Pika" },
-    { id: "RunwayML", name: "RunwayML" },
-    { id: "WaveSpeed AI", name: "WaveSpeed AI" },
-    { id: "OpenAI", name: "OpenAI" }
+    { id: "Self-Hosted", name: "Self-Hosted" }
   ];
 
   const filteredModels = videoModels.filter(model => {
