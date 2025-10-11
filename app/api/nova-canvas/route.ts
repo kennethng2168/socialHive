@@ -15,9 +15,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // AWS credentials should be configured via environment or AWS SDK
+    // AWS credentials should be configured directly in the code
     // For now, we'll use a placeholder structure
-    const AWS_REGION = 'us-east-1'; // Configure as needed
+    const AWS_REGION = 'us-east-1';
     
     // Check if AWS credentials are configured
     // In production, use AWS SDK with proper credentials

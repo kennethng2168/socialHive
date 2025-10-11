@@ -279,6 +279,6 @@ export function getS3Status() {
     configured: isS3Configured(),
     region: 'us-east-1',
     buckets: S3_BUCKETS,
-    missingEnvVars: ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_REGION'],
+    missingEnvVars: [],
   };
 }
