@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare request for the new MCP API
-    const apiUrl = "http://43.216.73.223:8000/mcp/call";
+    const apiUrl = "https://awshackathon.pagekite.me/mcp/call";
     const requestData = {
       tool_name: "virtual_tryon",
       arguments: {
