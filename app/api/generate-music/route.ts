@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const api_key = process.env.WAVESPEED_API_KEY;
+    const api_key = '';
     const isDemo = !api_key || api_key === 'your_wavespeed_api_key_here' || api_key === 'demo_key';
 
     if (isDemo) {

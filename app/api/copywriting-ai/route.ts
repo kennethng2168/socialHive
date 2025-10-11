@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }: CopywritingRequest = await request.json();
 
     // Get Gemini API key from environment
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = '';
     
     if (!apiKey) {
       return NextResponse.json(
@@ -316,7 +316,7 @@ export async function GET(request: NextRequest) {
       'Engagement prediction',
       'Character limit enforcement'
     ],
-    geminiConnected: !!process.env.GEMINI_API_KEY,
+    geminiConnected: false,
     supportedPlatforms: ['Instagram', 'Twitter/X', 'Facebook', 'TikTok', 'YouTube', 'General']
   });
 }

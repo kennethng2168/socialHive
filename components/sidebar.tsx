@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,7 +12,6 @@ import {
   MessageCircle,
   TrendingUp,
   Wand2,
-  Sparkles,
   Music,
   MessageSquare,
   Plus,
@@ -100,27 +98,27 @@ export function Sidebar() {
   };
 
   return (
-    <div className="fixed left-0 top-0 flex h-screen w-64 flex-col bg-white border-r border-gray-200 z-40">
+    <div className="fixed left-0 top-0 flex h-screen w-64 flex-col bg-white border-r border-gray-200 z-40 shadow-sm">
       {/* Header */}
-      <div className="flex items-center gap-2 p-6 border-b border-gray-100">
-        <img src="/socialHive-logo.png" alt="SocialHive Logo" />
+      <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-100">
+        <img src="/socialHive-logo.png" alt="SocialHive Logo" className="h-8" />
       </div>
 
       {/* Upload Button */}
-      <div className="px-4 py-4 border-b border-gray-100">
+      <div className="px-4 py-5 border-b border-gray-100">
         <Link href="/upload">
-          <Button className="w-full bg-foreground hover:bg-primary/90 text-white rounded-lg font-medium">
+          <Button className="w-full bg-gradient-to-r from-primary to-orange-500 hover:from-primary/90 hover:to-orange-500/90 text-white rounded-lg font-semibold shadow-sm hover:shadow-md transition-all">
             <Plus className="h-4 w-4 mr-2" />
-            Generate
+            Generate Content
           </Button>
         </Link>
       </div>
 
       {/* Navigation with ScrollArea */}
       <ScrollArea className="flex-1">
-        <nav className="px-4 py-4">
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
+        <nav className="px-3 py-4">
+          <div className="space-y-0.5">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-2 mb-1">
               Manage
             </p>
             {navigation.map((item) => (
@@ -129,20 +127,20 @@ export function Sidebar() {
                 href={item.href}
                 onClick={handleItemClick}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus:outline-none",
                   isActive(item.href)
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-primary/10 text-primary shadow-sm"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                 )}
               >
-                <item.icon className="h-5 w-5" />
-                {item.name}
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <span className="truncate">{item.name}</span>
               </Link>
             ))}
           </div>
 
-          <div className="space-y-1 pt-6">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
+          <div className="space-y-0.5 pt-6">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-2 mb-1">
               AI Tools
             </p>
             {aiTools.map((item) => (
@@ -151,25 +149,25 @@ export function Sidebar() {
                 href={item.href}
                 onClick={handleItemClick}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus:outline-none",
                   isActive(item.href)
-                    ? "bg-accent text-accent-foreground"
-                    : "text-gray-600 hover:bg-accent/10 hover:text-accent"
+                    ? "bg-primary/10 text-primary shadow-sm"
+                    : "text-gray-700 hover:bg-primary/5 hover:text-primary"
                 )}
               >
-                <item.icon className="h-5 w-5" />
-                {item.name}
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <span className="flex-1 truncate">{item.name}</span>
                 {(item.name.includes("AI") ||
                   item.name === "Content Workflow Studio") && (
-                  <Wand2 className="h-3 w-3 text-accent ml-auto" />
+                  <Wand2 className="h-3.5 w-3.5 flex-shrink-0" />
                 )}
               </Link>
             ))}
           </div>
 
-          <div className="space-y-1 pt-6">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2 py-2">
-              Others
+          <div className="space-y-0.5 pt-6 pb-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-2 mb-1">
+              Support
             </p>
             {others.map((item) => (
               <Link
@@ -177,14 +175,14 @@ export function Sidebar() {
                 href={item.href}
                 onClick={handleItemClick}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all focus:outline-none",
                   isActive(item.href)
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-primary/10 text-primary shadow-sm"
+                    : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                 )}
               >
-                <item.icon className="h-5 w-5" />
-                {item.name}
+                <item.icon className="h-5 w-5 flex-shrink-0" />
+                <span className="truncate">{item.name}</span>
               </Link>
             ))}
           </div>

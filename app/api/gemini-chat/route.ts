@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const { message, systemPrompt, currentPage }: ChatRequest = await request.json();
 
     // Get Gemini API key from environment
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = '';
     
     if (!apiKey) {
       return NextResponse.json(
@@ -154,6 +154,6 @@ export async function GET(request: NextRequest) {
       'Trend Insights',
       'AI Tool Guidance'
     ],
-    geminiConnected: !!process.env.GEMINI_API_KEY
+    geminiConnected: false
   });
 }

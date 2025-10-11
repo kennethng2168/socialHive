@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get API key from environment variables
-    const api_key = process.env.WAVESPEED_API_KEY;
+    const api_key = '';
     
     // Check if we should run in demo mode
     const isDemo = !api_key || api_key === 'your_wavespeed_api_key_here' || api_key === 'demo_key';

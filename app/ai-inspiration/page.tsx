@@ -1,13 +1,10 @@
-import { Sidebar } from "@/components/sidebar"
+import { AppLayout } from "@/components/app-layout"
 import { AIInspirationHub } from "@/components/ai-inspiration-hub"
 
 export default function AIInspirationPage() {
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="flex-1 ml-64 overflow-auto">
-        <AIInspirationHub />
-      </main>
-    </div>
+    <AppLayout>
+      <AIInspirationHub />
+    </AppLayout>
   )
 }

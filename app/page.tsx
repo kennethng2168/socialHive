@@ -1,340 +1,170 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { BarChart3, TrendingUp, Settings } from "lucide-react";
+import { AppLayout } from "@/components/app-layout";
 
 export default function Home() {
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation Bar */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <a href="/" className="block">
-              <div className="flex items-center">
-                <img
-                  src="/socialHive-logo.png"
-                  alt="SocialHive Logo"
-                  className="h-8"
+    <AppLayout>
+      {/* Main Content Area - All-in-One Tool */}
+      <main className="flex flex-col items-center justify-center py-20 px-8 bg-white min-h-[calc(100vh-73px)]">
+          <div className="max-w-4xl mx-auto w-full text-center">
+            {/* Tool Icon and Title */}
+            <div className="flex items-center justify-center mb-6">
+              <img
+                src="/mainPage_assets/bee.png"
+                alt="All-in-One Content Creator"
+                className="h-20 mr-5"
+              />
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
+                All-in-One Content Creator
+              </h1>
+            </div>
+
+            {/* Description */}
+            <p className="text-gray-600 mb-12 max-w-2xl mx-auto text-xl leading-relaxed">
+              Create complete AI-driven content workflows — from image generation to video production, lip-syncing, and music creation
+            </p>
+
+            {/* Input Field */}
+            <div className="w-full mb-8">
+              <div className="flex items-center bg-white border-2 border-gray-900 rounded-full p-2 hover:shadow-lg transition-all">
+                {/* Plus Icon */}
+                <div className="flex-shrink-0 ml-2">
+                  <button type="button" className="w-10 h-10 flex items-center justify-center transition-colors hover:bg-gray-100 rounded-full">
+                    <svg
+                      className="w-8 h-8 text-gray-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <title>Add attachment</title>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Input */}
+                <input
+                  type="text"
+                  placeholder="Type your idea or upload a photo — generate visuals, videos, and captions instantly."
+                  className="flex-1 text-lg bg-transparent border-none outline-none text-gray-900 placeholder-gray-500 px-4 py-2"
                 />
-              </div>
-            </a>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-700 font-medium">Amber Chen</span>
-              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                <div className="w-6 h-6 bg-orange-600 rounded-full" />
-              </div>
-              {/* Dropdown Menu */}
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="text-gray-500 hover:text-gray-700 p-1 rounded-md hover:bg-gray-100 transition-colors"
-                >
+
+                {/* Submit Button */}
+                <button type="button" className="flex-shrink-0 ml-4 w-12 h-12 bg-primary rounded-full flex items-center justify-center hover:bg-primary/90 transition-all hover:scale-105 shadow-md">
                   <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                    <title>Submit</title>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 11l5-5m0 0l5 5m-5-5v12"
+                    />
                   </svg>
                 </button>
+              </div>
+            </div>
 
-                {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                    <a
-                      href="/analytics"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                    >
-                      <BarChart3 className="h-4 w-4 mr-3 text-gray-500" />
-                      Analytics
-                    </a>
-                    <a
-                      href="/trends"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                    >
-                      <TrendingUp className="h-4 w-4 mr-3 text-gray-500" />
-                      Trends
-                    </a>
-                    <a
-                      href="/tools"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                    >
-                      <Settings className="h-4 w-4 mr-3 text-gray-500" />
-                      All Tools
-                    </a>
-                    <a
-                      href="/comments"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                    >
-                      <svg className="h-4 w-4 mr-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                      Comments
-                    </a>
-                    <div className="border-t border-gray-200"></div>
-                    <button
-                      onClick={() => {
-                        setShowDropdown(false);
-                        alert("Logout functionality would be implemented here");
-                      }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <svg
-                        className="h-4 w-4 mr-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                        />
-                      </svg>
-                      Logout
-                    </button>
+            {/* Bottom Link */}
+            <div className="flex justify-center mt-8">
+              <a
+                href="/tools"
+                className="text-primary hover:text-primary/80 font-medium text-base flex items-center gap-2 transition-colors group"
+              >
+                <span>Discover more AI tools</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="group-hover:translate-x-1 transition-transform"
+                >
+                  <title>Arrow</title>
+                  <path d="M5 12h14" />
+                  <path d="M12 5l7 7-7 7" />
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          {/* Quick Access Cards */}
+          <div className="mt-20 w-full max-w-6xl">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-left">Quick Access</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Image-to-Video Animator */}
+              <a href="/tool/image-to-video" className="group">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-primary/50 transition-all duration-300 cursor-pointer h-full">
+                  <div className="mb-4">
+                    <img
+                      src="/mainPage_assets/dragon.png"
+                      alt="Image-to-Video Animator"
+                      className="h-12 w-12 object-contain"
+                    />
                   </div>
-                )}
-              </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary transition-colors">
+                    Image-to-Video Animator
+                  </h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Prompt whatever you desire and watch it come to life with smooth AI-powered animation.
+                  </p>
+                </div>
+              </a>
+
+              {/* AI Image Generation Studio */}
+              <a href="/image-gen" className="group">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-primary/50 transition-all duration-300 cursor-pointer h-full">
+                  <div className="mb-4">
+                    <img
+                      src="/mainPage_assets/cookie.png"
+                      alt="AI Image Generation Studio"
+                      className="h-12 w-12 object-contain"
+                    />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary transition-colors">
+                    AI Image Generation Studio
+                  </h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Turn your ideas into stunning visuals. Generate high-quality, photorealistic images with advanced AI models.
+                  </p>
+                </div>
+              </a>
+
+              {/* AI Video Generation Studio */}
+              <a href="/video-gen" className="group">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-xl hover:border-primary/50 transition-all duration-300 cursor-pointer h-full">
+                  <div className="mb-4">
+                    <img
+                      src="/mainPage_assets/starfish.png"
+                      alt="AI Video Generation Studio"
+                      className="h-12 w-12 object-contain"
+                    />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-primary transition-colors">
+                    AI Video Generation Studio
+                  </h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Create dynamic short videos in minutes using state-of-the-art AI models. Perfect for reels, ads, and social content.
+                  </p>
+                </div>
+              </a>
             </div>
           </div>
-        </div>
-      </nav>
-
-      {/* Features Grid */}
-      <section className="py-10 bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-3xl font-bold text-gray-900 mb-4 ">
-              Every AI tool you need to create and grow your content - in one
-              place
-            </h2>
-            <p className="text-xl text-gray-600 max-w-4xl mx-auto light-text">
-              Explore smart generators for images, videos, captions, and trends
-              — or combine them with our
-              <br />
-              All-in-One mode. Create, test, and share content seeamlessly
-              across all platforms
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* All-in-One Content Creator */}
-            <a href="/tool/all-in-one" className="block">
-              <div className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center">
-                  <img
-                    src="/mainPage_assets/bee.png"
-                    alt="All-in-One Content Creator"
-                    className="h-15"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  All-in-One Content Creator
-                </h3>
-                <p className="text-gray-600 mb-4 light-text">
-                  Generate full content sets in one go — from images to videos,
-                  lipsyncm and music — powered by smart AI agents
-                </p>
-              </div>
-            </a>
-
-            {/* Image-to-Video Animator */}
-            <a href="/tool/image-to-video" className="block">
-              <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center">
-                  <img
-                    src="/mainPage_assets/dragon.png"
-                    alt="Image-to-Video Animator"
-                    className="h-15"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Image-to-Video Animator
-                </h3>
-                <p className="text-gray-600 mb-4 light-text">
-                  Prompt whatever you desire and watch it come to life with
-                  smooth AI-powered animation
-                </p>
-              </div>
-            </a>
-
-            {/* AI Music Video Studio */}
-            <a href="/tool/ai-music-video" className="block">
-              <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center">
-                  <img
-                    src="/mainPage_assets/star.png"
-                    alt="AI Music Video Studio"
-                    className="h-15"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  AI Music Video Studio
-                </h3>
-                <p className="text-gray-600 mb-4 light-text">
-                  Combine AI-generated soundtracks, visuals, and motion into a
-                  polished music video — all in one place.
-                </p>
-              </div>
-            </a>
-
-            {/* AI Video Generation Studio */}
-            <a href="/video-gen" className="block">
-              <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center">
-                  <img
-                    src="/mainPage_assets/starfish.png"
-                    alt="AI Video Generation Studio"
-                    className="h-15"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  AI Video Generation Studio
-                </h3>
-                <p className="text-gray-600 mb-4 light-text">
-                  Create dynamic short videos in minutes using state-of-the-art
-                  AI models. Perfect for reels, ads, and social content.
-                </p>
-              </div>
-            </a>
-
-            {/* AI Image Generation Studio */}
-            <a href="/image-gen" className="block">
-              <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center">
-                  <img
-                    src="/mainPage_assets/cookie.png"
-                    alt="AI Image Generation Studio"
-                    className="h-15"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  AI Image Generation Studio
-                </h3>
-                <p className="text-gray-600 mb-4 light-text">
-                  Turn your ideas into stunning visuals. Generate high-quality,
-                  photorealistic images with advanced AI models.
-                </p>
-              </div>
-            </a>
-
-            {/* AI Copywriting Studio */}
-            <a href="/copywriting" className="block">
-              <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center">
-                  <img
-                    src="/mainPage_assets/banana.png"
-                    alt="AI Copywriting Studio"
-                    className="h-15"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  AI Copywriting Studio
-                </h3>
-                <p className="text-gray-600 mb-4 light-text">
-                  Instantly write catchy captions, taglines, and post copy that
-                  fits your style and audience.
-                </p>
-              </div>
-            </a>
-
-            {/* AI Content Assistant */}
-            <a href="/ai-assistant" className="block">
-              <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center">
-                  <img
-                    src="/mainPage_assets/flower.png"
-                    alt="AI Content Assistant"
-                    className="h-15"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  AI Content Assistant
-                </h3>
-                <p className="text-gray-600 mb-4 light-text">
-                  Get personalized recommendations, performance insights, and
-                  content ideas to grow your social presence.
-                </p>
-              </div>
-            </a>
-
-            {/* Virtual Try-On Studio */}
-            <a href="/virtual-try-on" className="block">
-              <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-center">
-                  <img
-                    src="/mainPage_assets/person.png"
-                    alt="Virtual Try-On Studio"
-                    className="h-15"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Virtual Try-On Studio
-                </h3>
-                <p className="text-gray-600 mb-4 light-text">
-                  Try outfits in seconds with AI. Upload a photo and instantly
-                  preview how any clothing looks on you.
-                </p>
-              </div>
-            </a>
-
-            {/* More features in development */}
-            <div
-              className=" rounded-xl p-4 hover:shadow-lg transition-shadow relative"
-              style={{
-                backgroundImage: 'url("/colorbox.png")',
-                backgroundSize: "150% 150%",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-              }}
-            >
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                More features in development
-              </h3>
-              <p className="text-gray-600 mb-4 light-text">
-                We're constantly improving your creative workflow. Upcoming
-                features include advanced video editing, team collaboration
-                tools, content scheduling, and AI-driven analytics — all
-                designed to make your creative process faster and smarter.
-              </p>
-            </div>
-
-            {/* Decorative Bottom Right Image */}
-            <div />
-            <div />
-            <div className="flex justify-end items-end">
-              <img
-                src="/mainPage_assets/cats.png"
-                alt="cats"
-                className="w-40 h-40"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+        </main>
+    </AppLayout>
   );
 }

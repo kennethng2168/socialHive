@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Real implementation - call the Python multi-agent system
-    const pythonEndpoint = process.env.CONTENT_CREATION_ENDPOINT || 'http://127.0.0.1:8000';
+    const pythonEndpoint = 'http://127.0.0.1:8000';
     
     try {
       console.log('Calling Python backend at:', `${pythonEndpoint}/workflow/create`);

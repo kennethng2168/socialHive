@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get API key from environment variables
-    const api_key = process.env.IDMVTON_API_KEY;
+    const api_key = '';
     if (!api_key) {
       return NextResponse.json(
         { error: 'API key not configured. Please set IDMVTON_API_KEY environment variable.' },

@@ -1,15 +1,15 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Josefin_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
 
-const josefinSans = Josefin_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-josefin-sans",
-  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-inter",
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`font-sans ${josefinSans.variable}`}
+        className={`${inter.variable} font-sans antialiased`}
       >
         <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
         <Toaster />

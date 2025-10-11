@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const apiKey = process.env.WAVESPEED_API_KEY
+    const apiKey = ''
     if (!apiKey) {
       return NextResponse.json(
         { error: 'WAVESPEED_API_KEY not configured' },
