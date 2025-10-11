@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // FastAPI MCP Server URL
-const FASTAPI_SERVER_URL = process.env.FASTAPI_SERVER_URL || 'https://awshackathon1.pagekite.me';
+const FASTAPI_SERVER_URL = process.env.FASTAPI_SERVER_URL || 'http://localhost:8000';
 
 interface CopywritingRequest {
   prompt: string;
@@ -64,7 +64,7 @@ Engagement Score: [Predicted score 1-10]
 
 Create content that will drive engagement and achieve marketing goals for this ${contentType} on ${platform}.`;
 
-    // Call FastAPI server
+    // Call FastAPI server (no timeout - wait until completion)
     const response = await fetch(`${FASTAPI_SERVER_URL}/nova/pro/generate`, {
       method: 'POST',
       headers: {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // FastAPI MCP Server URL
-const FASTAPI_SERVER_URL = process.env.FASTAPI_SERVER_URL || 'https://awshackathon1.pagekite.me';
+const FASTAPI_SERVER_URL = process.env.FASTAPI_SERVER_URL || 'http://localhost:8000';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       fastapiFormData.append('file', imageFile);
     }
 
-    // Call FastAPI server
+    // Call FastAPI server (no timeout - wait until completion)
     const response = await fetch(`${FASTAPI_SERVER_URL}/agent/smart-creative`, {
       method: 'POST',
       body: fastapiFormData

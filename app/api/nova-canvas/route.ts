@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // FastAPI MCP Server URL
-const FASTAPI_SERVER_URL = process.env.FASTAPI_SERVER_URL || 'https://awshackathon1.pagekite.me';
+const FASTAPI_SERVER_URL = process.env.FASTAPI_SERVER_URL || 'http://localhost:8000';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     console.log('Generating image with Amazon Nova Canvas via FastAPI MCP Server...');
     console.log('FastAPI URL:', FASTAPI_SERVER_URL);
 
-    // Call FastAPI server
+    // Call FastAPI server (no timeout - wait until completion)
     const response = await fetch(`${FASTAPI_SERVER_URL}/nova/canvas/generate`, {
       method: 'POST',
       headers: {
@@ -86,9 +86,15 @@ export async function POST(request: NextRequest) {
       s3_key: img.s3_key
     }));
 
+    // Get the primary image URL (try S3 first, then direct URL, then base64)
+    const primaryImageUrl = (data.s3_urls && data.s3_urls.length > 0) 
+      ? data.s3_urls[0] 
+      : images[0].url || images[0].base64;
+
     return NextResponse.json({
       success: true,
-      imageUrl: images[0].url || images[0].base64,
+      imageUrl: primaryImageUrl,
+      s3Url: (data.s3_urls && data.s3_urls.length > 0) ? data.s3_urls[0] : null, // Add s3Url field
       images: images,
       s3_urls: data.s3_urls,
       seed: data.seed,
@@ -99,7 +105,14 @@ export async function POST(request: NextRequest) {
         seed: data.seed,
         numberOfImages: images.length,
         timestamp: new Date().toISOString(),
-        source: 'fastapi-mcp-server'
+        source: 'fastapi-mcp-server',
+        s3Upload: data.s3_urls && data.s3_urls.length > 0 ? {
+          success: true,
+          enabled: true
+        } : {
+          success: false,
+          enabled: false
+        }
       }
     });
 

@@ -750,9 +750,19 @@ export default function ImageGenerationPage() {
                   <div className="w-full space-y-4">
                     <div className="relative">
                       <img
-                        src={result.s3Url || result.imageUrl}
+                        src={result.imageUrl}
                         alt="Generated"
-                        className="max-w-full max-h-[60vh] w-auto h-auto rounded-lg shadow-lg mx-auto object-contain"
+                        className="max-w-full max-h-[60vh] w-auto h-auto rounded-lg shadow-lg mx-auto object-contain bg-gray-50"
+                        onError={(e) => {
+                          console.error('Image failed to load:', result.imageUrl);
+                          console.log('Result data:', result);
+                          // Try to show a better error message
+                          const imgElement = e.target as HTMLImageElement;
+                          imgElement.alt = "Image failed to load. Check console for details.";
+                        }}
+                        onLoad={() => {
+                          console.log('Image loaded successfully:', result.imageUrl);
+                        }}
                       />
                       <Badge className="absolute top-2 right-2 bg-green-500">
                         <CheckCircle className="h-3 w-3 mr-1" />

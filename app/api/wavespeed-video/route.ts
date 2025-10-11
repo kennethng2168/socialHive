@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       console.log('Using MCP server for self-hosted video generation...');
       
       try {
-        const mcpUrl = 'https://awshackathon.pagekite.me/mcp/call';
+        const mcpUrl = 'http://localhost:8000/mcp/call';
         
         // Determine which MCP tool to use based on whether we have an image
         let mcpToolName: string;

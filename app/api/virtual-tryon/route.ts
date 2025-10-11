@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare request for the new MCP API
-    const apiUrl = "https://awshackathon.pagekite.me/mcp/call";
+    const apiUrl = "http://localhost:8000/mcp/call";
     const requestData = {
       tool_name: "virtual_tryon",
       arguments: {
@@ -150,7 +150,8 @@ export async function POST(request: NextRequest) {
         garment_description: garment_des.trim(),
         denoise_steps: parseInt(steps.toString()),
         seed: parseInt(seed.toString())
-      }
+      },
+      server_name: "vton"
     };
 
     console.log('Sending request to MCP API...');
@@ -174,9 +175,10 @@ export async function POST(request: NextRequest) {
 
     console.log('Received response from MCP API');
     console.log('Response data keys:', Object.keys(response.data));
+    console.log('Full response structure:', JSON.stringify(response.data, null, 2).substring(0, 500));
 
     // Check if the API returned an error
-    if (response.data.success === false || response.data.error) {
+    if (response.data.error || response.data.success === false) {
       console.error('MCP API returned an error:', response.data.error);
       const errorMessage = response.data.error || 'Unknown error from MCP API';
       
@@ -191,70 +193,136 @@ export async function POST(request: NextRequest) {
 
     // Parse the response
     let imageDataUrl: string;
-    let base64Image: string;
-
-    // Log the response structure to help debug
-    if (response.data.content) {
-      console.log('Response has content property with type:', typeof response.data.content);
-    }
+    let base64Image: string = '';
+    let s3UrlFromMcp: string | null = null;
 
     // The API might return the image in different formats
     // Try multiple paths to find the image data
     if (response.data.content) {
+      console.log('Response has content property');
       // MCP format with content array
       if (Array.isArray(response.data.content)) {
+        console.log('Content is array with', response.data.content.length, 'items');
+        
+        // Check for text content that might contain S3 URL or base64
+        const textContent = response.data.content.find((item: any) => item.type === 'text');
+        if (textContent && textContent.text) {
+          console.log('Found text content:', textContent.text.substring(0, 200));
+          
+          // Try to extract S3 URL from text
+          const s3UrlMatch = textContent.text.match(/(?:Image URL:|URL:)\s*(https?:\/\/[^\s\n]+)/i);
+          if (s3UrlMatch && s3UrlMatch[1]) {
+            s3UrlFromMcp = s3UrlMatch[1];
+            console.log('Found S3 URL in text:', s3UrlFromMcp);
+            
+            // Download the image from S3 URL
+            try {
+              const imageResponse = await axios.get(s3UrlFromMcp as string, { responseType: 'arraybuffer' });
+              base64Image = Buffer.from(imageResponse.data, 'binary').toString('base64');
+              console.log('Downloaded image from S3, size:', base64Image.length);
+            } catch (error) {
+              console.error('Failed to download image from S3:', error);
+              throw new Error('Virtual try-on succeeded but failed to download result image from S3');
+            }
+          }
+          // Try to extract base64 from text
+          else if (textContent.text.includes('base64') || textContent.text.match(/^[A-Za-z0-9+/=]{100,}/)) {
+            const base64Match = textContent.text.match(/(?:Base64 Image:|base64:)\s*([A-Za-z0-9+/=]+)/i);
+            if (base64Match) {
+              base64Image = base64Match[1];
+              console.log('Extracted base64 from text, size:', base64Image.length);
+            } else {
+              // Try treating entire text as base64
+              const cleanedText = textContent.text.replace(/\s/g, '');
+              if (cleanedText.match(/^[A-Za-z0-9+/=]+$/)) {
+                base64Image = cleanedText;
+                console.log('Using entire text as base64, size:', base64Image.length);
+              }
+            }
+          }
+        }
+        
+        // Check for image content
         const imageContent = response.data.content.find((item: any) => 
           item.type === 'image' || item.type === 'resource'
         );
         if (imageContent && imageContent.data) {
           base64Image = imageContent.data;
+          console.log('Found image data in content array, size:', base64Image.length);
         } else if (imageContent && imageContent.url) {
-          base64Image = imageContent.url;
-        } else {
+          // Download from URL
+          try {
+            const imageResponse = await axios.get(imageContent.url, { responseType: 'arraybuffer' });
+            base64Image = Buffer.from(imageResponse.data, 'binary').toString('base64');
+            console.log('Downloaded image from URL, size:', base64Image.length);
+          } catch (error) {
+            console.error('Failed to download image from URL:', error);
+            throw new Error('Failed to download image from provided URL');
+          }
+        }
+        
+        if (!base64Image) {
           console.error('No image found in content array:', JSON.stringify(response.data.content));
           throw new Error('No image data in content array');
         }
       } else if (typeof response.data.content === 'string') {
         base64Image = response.data.content;
+        console.log('Content is string, size:', base64Image.length);
       } else if (response.data.content.data) {
         base64Image = response.data.content.data;
+        console.log('Found data in content object, size:', base64Image.length);
       } else if (response.data.content.image) {
         base64Image = response.data.content.image;
+        console.log('Found image in content object, size:', base64Image.length);
       } else {
         console.error('Unknown content format:', JSON.stringify(response.data.content));
         throw new Error('Unknown content format');
       }
     } else if (response.data.result) {
+      console.log('Response has result property');
       // If result contains base64 image
       if (typeof response.data.result === 'string') {
         base64Image = response.data.result;
+        console.log('Result is string, size:', base64Image.length);
       } else if (response.data.result.image) {
         base64Image = response.data.result.image;
+        console.log('Found image in result, size:', base64Image.length);
       } else if (response.data.result.data) {
         base64Image = response.data.result.data;
+        console.log('Found data in result, size:', base64Image.length);
       } else {
         console.error('Unknown result format:', JSON.stringify(response.data.result));
         throw new Error('Invalid response format from API');
       }
     } else if (response.data.image) {
       base64Image = response.data.image;
+      console.log('Found image property, size:', base64Image.length);
     } else if (response.data.data) {
       base64Image = response.data.data;
+      console.log('Found data property, size:', base64Image.length);
     } else {
       console.error('Full response data:', JSON.stringify(response.data, null, 2));
       throw new Error('No image data in API response. Check server logs for details.');
     }
+
+    if (!base64Image || base64Image.length < 100) {
+      console.error('Base64 image is empty or too small:', base64Image?.length);
+      throw new Error('Received empty or invalid image data from API');
+    }
+
+    console.log('Final base64 image size:', base64Image.length);
 
     // Ensure we have a valid data URL
     imageDataUrl = base64Image.startsWith('data:') 
       ? base64Image 
       : `data:image/png;base64,${base64Image}`;
     
-    let s3Url = null;
+    // Use S3 URL from MCP if available, otherwise try local upload
+    let s3Url = s3UrlFromMcp;
     let s3UploadError = null;
 
-    // Try to upload to S3 if configured
-    if (isS3Configured()) {
+    // Only try local S3 upload if MCP didn't provide one and local S3 is configured
+    if (!s3UrlFromMcp && isS3Configured()) {
       try {
         console.log('Uploading virtual try-on result to S3...');
         // Extract pure base64 if it has data URL prefix
@@ -274,7 +342,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (uploadResult.success) {
-          s3Url = uploadResult.url;
+          s3Url = uploadResult.url || null;
           console.log('Successfully uploaded virtual try-on result to S3:', s3Url);
         } else {
           s3UploadError = uploadResult.error;
@@ -296,9 +364,10 @@ export async function POST(request: NextRequest) {
         steps,
         seed,
         s3Upload: {
-          enabled: isS3Configured(),
+          enabled: isS3Configured() || !!s3UrlFromMcp,
           success: !!s3Url,
-          error: s3UploadError
+          error: s3UploadError,
+          source: s3UrlFromMcp ? 'mcp-server' : (s3Url ? 'local' : 'none')
         }
       }
     });

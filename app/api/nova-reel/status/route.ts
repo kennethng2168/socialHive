@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // FastAPI MCP Server URL
-const FASTAPI_SERVER_URL = process.env.FASTAPI_SERVER_URL || 'https://awshackathon1.pagekite.me';
+const FASTAPI_SERVER_URL = process.env.FASTAPI_SERVER_URL || 'http://localhost:8000';
 
 export async function GET(request: NextRequest) {
   try {
