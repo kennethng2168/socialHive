@@ -3,6 +3,7 @@
 import type React from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Link from "next/link";
 import {
@@ -22,6 +23,7 @@ import {
   Film,
   Zap,
   PenTool,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +36,13 @@ const navigation = [
 ];
 
 const aiTools = [
+  {
+    name: "Smart Creative Studio",
+    icon: Sparkles,
+    href: "/smart-creative",
+    current: false,
+    badge: "All-in-One",
+  },
   {
     name: "Content Workflow Studio",
     icon: Zap,
@@ -143,7 +152,7 @@ export function Sidebar() {
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 py-2 mb-1">
               AI Tools
             </p>
-            {aiTools.map((item) => (
+            {aiTools.map((item: any) => (
               <Link
                 key={item.name}
                 href={item.href}
@@ -157,7 +166,12 @@ export function Sidebar() {
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
                 <span className="flex-1 truncate">{item.name}</span>
-                {(item.name.includes("AI") ||
+                {item.badge && (
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                    {item.badge}
+                  </Badge>
+                )}
+                {!item.badge && (item.name.includes("AI") ||
                   item.name === "Content Workflow Studio") && (
                   <Wand2 className="h-3.5 w-3.5 flex-shrink-0" />
                 )}
